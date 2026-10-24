@@ -609,6 +609,14 @@ $("city").addEventListener("change", function(){ fillZones(); render(); });
 document.querySelectorAll('input[name="mode"]').forEach(function(r){ r.addEventListener("change", render); });
 
 load(); render();
+
+/* Mide cuando alguien llega a la sección de sabores (catálogo) */
+(function(){ try{
+  var sec = document.getElementById("sabores"); if(!sec || !("IntersectionObserver" in window)) return;
+  var done = false;
+  var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if(e.isIntersecting && !done){ done = true; track("view_catalog"); io.disconnect(); } }); }, {threshold:0.01});
+  io.observe(sec);
+}catch(e){} })();
 </script>
 
 </body>
