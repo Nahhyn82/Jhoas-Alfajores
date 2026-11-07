@@ -77,7 +77,7 @@ nav a:hover,nav a:focus-visible{color:var(--fg)}
 .card .tag{font-size:14px;color:var(--muted)}
 .card .row{margin-top:auto;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .price{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.card .btn{padding:11px 16px;font-size:14px}
+.card .btn{min-height:44px;padding:0 16px;font-size:14px}
 
 .pricebar{display:flex;flex-wrap:wrap;gap:8px 24px;color:var(--fg);font-size:16px}
 .pricebar b{font-family:var(--font-display);font-size:24px;color:var(--accent);margin-left:4px}
@@ -129,16 +129,20 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 }
 @media (prefers-reduced-motion:no-preference){.card{transition:transform .2s}.card:hover{transform:translateY(-3px)}}
 
-.btn.small{padding:10px 14px;font-size:13px}
+.btn.small{min-height:44px;padding:0 14px;font-size:14px}
 .card .row{gap:8px}
 .card .body>.price{text-transform:none;letter-spacing:0;font-size:14px}
 .cartbtn .count,.fab .count{display:inline-flex;min-width:22px;height:22px;padding-inline:6px;border-radius:999px;background:var(--accent-ink);color:var(--accent);align-items:center;justify-content:center;font-size:12px;font-weight:900}
-.fab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;box-shadow:0 10px 24px -8px rgba(60,35,25,.55);padding:14px 20px}
+.fab{min-height:48px;position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;box-shadow:0 10px 24px -8px rgba(60,35,25,.55);padding:14px 20px}
 .overlay{position:fixed;inset:0;z-index:40;background:rgba(40,25,20,.55);display:flex;justify-content:flex-end}
 .panel{background:var(--bg);color:var(--fg);width:100%;max-width:460px;height:100%;overflow-y:auto;padding:20px 20px calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:18px}
 .panel header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .panel h2{font-size:30px}
-.iconbtn{background:transparent;border:1.5px solid var(--line);color:var(--fg);border-radius:999px;width:40px;height:40px;font-size:20px;line-height:1;cursor:pointer}
+.toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:21;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#3b2a25;color:#fbf6f3;border-radius:16px;padding:8px 8px 8px 16px;box-shadow:0 12px 28px -10px rgba(60,35,25,.6);font-size:15px}
+.toast button{min-height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:700 14px var(--font-body);cursor:pointer;white-space:nowrap}
+@media(min-width:700px){.toast{left:auto;width:420px}}
+.note{margin:0 0 20px;font-size:14px;color:var(--muted)}
+.iconbtn{background:transparent;border:1.5px solid var(--line);color:var(--fg);border-radius:999px;width:44px;height:44px;font-size:22px;line-height:1;cursor:pointer}
 .iconbtn:focus-visible,.panel input:focus-visible,.panel select:focus-visible,.panel button:focus-visible,.fab:focus-visible,.cartbtn:focus-visible,.card .btn:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
 .lines{list-style:none;margin:0;padding:0;display:grid;gap:10px}
 .lines li{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
@@ -146,7 +150,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 .lines .sub{font-size:13px;color:var(--muted)}
 .lines .amt{font-weight:700;font-variant-numeric:tabular-nums}
 .qty{display:inline-flex;align-items:center;gap:8px}
-.qty button{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--line);background:transparent;color:var(--fg);font-size:16px;cursor:pointer}
+.qty button{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);background:transparent;color:var(--fg);font-size:16px;cursor:pointer}
 .qty span{min-width:20px;text-align:center;font-variant-numeric:tabular-nums}
 .empty{color:var(--muted);padding:18px;border:1.5px dashed var(--line);border-radius:12px;text-align:center}
 .panel fieldset{border:0;margin:0;padding:0;display:grid;gap:12px;min-width:0}
@@ -162,7 +166,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 .totals .grand{font:700 24px/1.2 var(--font-display);color:var(--accent);margin-top:4px}
 .err{color:var(--fg);background:var(--band);border-left:4px solid var(--accent);padding:10px 12px;border-radius:8px;font-size:14px}
 .panel .btn.full{width:100%;padding:16px 22px;font-size:16px}
-.clear{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;justify-self:start;padding:0}
+.clear{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;justify-self:start;padding:12px 0;min-height:44px}
 .imgwrap{position:relative}
 .imgwrap img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover}
 .badge{position:absolute;left:12px;top:12px;background:var(--surface);color:var(--muted);font:700 11px/1 var(--font-body);letter-spacing:.12em;text-transform:uppercase;padding:7px 10px;border-radius:999px}
@@ -230,6 +234,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
         <div><span class="eyebrow">Menú</span><h2>Línea clásica</h2></div>
         <p class="pricebar"><span>Unidad <b>Bs 7</b></span><span>Paquete de 10 <b>Bs 65</b></span></p>
       </div>
+      <p class="note">La disponibilidad de cada sabor se confirma contigo por WhatsApp al recibir tu pedido.</p>
       <div class="grid">
         <article class="card">
           <img src="img/chocolate-1.jpg" alt="Alfajor de chocolate envuelto en papel plateado junto a uno con baño de chocolate" loading="lazy">
@@ -391,6 +396,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
   <div class="wrap"><span>Jhoa's · alfajores artesanales</span><span><a href="https://www.instagram.com/jhoastreats/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.facebook.com/jhoastreats/?locale=es_LA" target="_blank" rel="noopener">Facebook</a></span></div>
 </footer>
 
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-msg"></span><button type="button" data-open-cart>Ver carrito</button></div>
 <button class="btn fab" type="button" data-open-cart aria-label="Abrir carrito">Carrito <span class="count" data-count>0</span></button>
 
 <div class="overlay" id="overlay" hidden>
@@ -415,17 +421,11 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 
     <fieldset id="f-delivery">
       <legend>Dónde te lo llevamos</legend>
-      <label for="city">Ciudad
-        <select id="city"><option value="">Elige tu ciudad</option><option>La Paz</option><option>El Alto</option></select>
+      <label for="zone">Ciudad y zona
+        <select id="zone"><option value="">Elige tu zona</option></select>
       </label>
-      <label for="zone">Zona
-        <select id="zone" disabled><option value="">Primero elige la ciudad</option></select>
-      </label>
-      <label for="addr">Dirección
-        <input id="addr" type="text" autocomplete="street-address" placeholder="Calle, número, edificio">
-      </label>
-      <label for="ref">Referencia <span class="hint">(opcional)</span>
-        <input id="ref" type="text" placeholder="Ejemplo: frente a la farmacia, portón verde">
+      <label for="addr">Dirección y referencia
+        <input id="addr" type="text" autocomplete="street-address" placeholder="Calle, número. Ej: frente a la farmacia">
       </label>
     </fieldset>
 
@@ -443,7 +443,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
     </div>
     <p class="err" id="err" role="alert" hidden></p>
     <a class="btn full" id="send" href="https://wa.me/59163223438" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
-    <p class="hint">El pedido se abre en WhatsApp para que lo confirmemos contigo. Todavía no se cobra nada en la página.</p>
+    <p class="hint">El pedido se abre en WhatsApp para que confirmemos contigo la disponibilidad y la hora de entrega. Todavía no se cobra nada en la página.</p>
   </aside>
 </div>
 
@@ -484,7 +484,7 @@ function count(){ var c = 0; Object.keys(cart).forEach(function(k){ c += cart[k]
 function mode(){ return document.querySelector('input[name="mode"]:checked').value; }
 function shipping(){
   if(mode() !== "delivery") return 0;
-  var c = $("city").value, z = $("zone").value;
+  var c = city(), z = $("zone").value;
   if(!c || !z) return null;
   var list = ZONES[c] || [];
   for(var i = 0; i < list.length; i++){ if(list[i][0] === z) return list[i][1]; }
@@ -523,14 +523,15 @@ function render(){
   updateLink();
 }
 
+function city(){ var sel = $("zone"), o = sel.options[sel.selectedIndex]; return (o && o.getAttribute("data-city")) || ""; }
 function fillZones(){
-  var c = $("city").value, sel = $("zone");
-  sel.innerHTML = "";
-  if(!c){ sel.disabled = true; sel.innerHTML = '<option value="">Primero elige la ciudad</option>'; return; }
-  sel.disabled = false;
-  var o = document.createElement("option"); o.value = ""; o.textContent = "Elige tu zona"; sel.appendChild(o);
-  ZONES[c].forEach(function(z){
-    var op = document.createElement("option"); op.value = z[0]; op.textContent = z[0] + " · Bs " + z[1]; sel.appendChild(op);
+  var sel = $("zone");
+  Object.keys(ZONES).forEach(function(c){
+    var g = document.createElement("optgroup"); g.label = c;
+    ZONES[c].forEach(function(z){
+      var op = document.createElement("option"); op.value = z[0]; op.setAttribute("data-city", c); op.textContent = z[0] + " · Bs " + z[1]; g.appendChild(op);
+    });
+    sel.appendChild(g);
   });
 }
 
@@ -538,8 +539,7 @@ function problems(){
   if(count() === 0) return "Agrega al menos un alfajor al carrito.";
   if(!$("cname").value.trim()) return "Escribe tu nombre.";
   if(mode() === "delivery"){
-    if(!$("city").value) return "Elige tu ciudad.";
-    if(!$("zone").value) return "Elige tu zona para calcular el envío.";
+    if(!$("zone").value) return "Elige tu ciudad y zona para calcular el envío.";
     if(!$("addr").value.trim()) return "Escribe tu dirección.";
   }
   return "";
@@ -554,11 +554,10 @@ function message(){
   var sub = subtotal(), sh = shipping();
   L.push("", "Subtotal: " + money(sub));
   if(mode() === "delivery"){
-    L.push("Envío con rider (" + $("zone").value + ", " + $("city").value + "): " + (sh === null ? "por confirmar" : money(sh)));
+    L.push("Envío con rider (" + $("zone").value + ", " + city() + "): " + (sh === null ? "por confirmar" : money(sh)));
     L.push("Total: " + (sh === null ? money(sub) + " + envío" : money(sub + sh)));
     L.push("", "Nombre: " + $("cname").value.trim());
-    L.push("Dirección: " + $("addr").value.trim() + ", " + $("zone").value + ", " + $("city").value);
-    if($("ref").value.trim()) L.push("Referencia: " + $("ref").value.trim());
+    L.push("Dirección y referencia: " + $("addr").value.trim() + ", " + $("zone").value + ", " + city());
   } else {
     L.push("Recojo: sin costo de envío", "Total: " + money(sub), "", "Nombre: " + $("cname").value.trim(), "Quiero coordinar el recojo.");
   }
@@ -566,7 +565,8 @@ function message(){
 }
 function updateLink(){ $("send").href = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(message()); }
 
-function openCart(){ track("view_cart",{currency:"BOB",value:subtotal(),items_count:count()}); lastFocus = document.activeElement; overlay.hidden = false; document.body.style.overflow = "hidden"; render(); $("close-cart").focus(); }
+var toastTimer; function showToast(m){ $("toast-msg").textContent = m; $("toast").hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ $("toast").hidden = true; }, 4500); }
+function openCart(){ $("toast").hidden = true; track("view_cart",{currency:"BOB",value:subtotal(),items_count:count()}); lastFocus = document.activeElement; overlay.hidden = false; document.body.style.overflow = "hidden"; render(); $("close-cart").focus(); }
 function closeCart(){ overlay.hidden = true; document.body.style.overflow = ""; if(lastFocus && lastFocus.focus) lastFocus.focus(); }
 
 document.addEventListener("click", function(e){
@@ -583,7 +583,7 @@ document.addEventListener("click", function(e){
     if(!cart[k]) cart[k] = { name: t.dataset.name, label: t.dataset.label, price: Number(t.dataset.price), qty: 0 };
     cart[k].qty++; save(); render();
     track("add_to_cart",{currency:"BOB",value:Number(t.dataset.price),items:[{item_id:k,item_name:t.dataset.name,item_variant:t.dataset.label,price:Number(t.dataset.price),quantity:1}]});
-    var old = t.textContent; t.textContent = "Agregado ✓"; setTimeout(function(){ t.textContent = old; }, 900);
+    showToast("Agregado: " + t.dataset.name + (t.dataset.label === "caja" ? "" : " (" + t.dataset.label + ")")); var old = t.textContent; t.textContent = "Agregado ✓"; setTimeout(function(){ t.textContent = old; }, 900);
     return;
   }
   if(t.hasAttribute("data-inc")){ cart[t.getAttribute("data-inc")].qty++; save(); render(); return; }
@@ -598,14 +598,14 @@ document.addEventListener("click", function(e){
     else {
       $("err").hidden = true;
       var shp = shipping();
-      track("send_order",{currency:"BOB",value:subtotal() + (shp || 0),shipping:shp || 0,delivery_mode:mode(),city:$("city").value,zone:$("zone").value,items_count:count()});
+      track("send_order",{currency:"BOB",value:subtotal() + (shp || 0),shipping:shp || 0,delivery_mode:mode(),city:city(),zone:$("zone").value,items_count:count()});
     }
   }
 });
 overlay.addEventListener("click", function(e){ if(e.target === overlay) closeCart(); });
 document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !overlay.hidden) closeCart(); });
-$("city").addEventListener("change", function(){ fillZones(); render(); });
-["zone","addr","ref","cname"].forEach(function(id){ $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
+fillZones();
+["zone","addr","cname"].forEach(function(id){ $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
 document.querySelectorAll('input[name="mode"]').forEach(function(r){ r.addEventListener("change", render); });
 
 load(); render();
