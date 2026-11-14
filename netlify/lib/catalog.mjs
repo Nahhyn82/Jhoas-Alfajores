@@ -9,11 +9,11 @@ const NAMES = {
 export const PRODUCTS = {};
 classic.forEach((id) => {
   PRODUCTS[id + "|u"] = { name: NAMES[id], label: "unidad", price: 8, flavor: id };
-  PRODUCTS[id + "|p"] = { name: NAMES[id], label: "paquete de 10", price: 65, flavor: id };
+  PRODUCTS[id + "|p"] = { name: NAMES[id], label: "paquete de 10", price: 75, flavor: id };
 });
 special.forEach((id) => {
   PRODUCTS[id + "|u"] = { name: NAMES[id], label: "unidad", price: 10, flavor: id };
-  PRODUCTS[id + "|p"] = { name: NAMES[id], label: "paquete de 10", price: 85, flavor: id };
+  PRODUCTS[id + "|p"] = { name: NAMES[id], label: "paquete de 10", price: 95, flavor: id };
 });
 PRODUCTS["caja-mix-10|c"] = { name: "Caja mix de 10", label: "caja", price: 92, flavor: "caja-mix-10" };
 PRODUCTS["caja-5-especiales|c"] = { name: "Caja de 5 especiales", label: "caja", price: 55, flavor: "caja-5-especiales" };

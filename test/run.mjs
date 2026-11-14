@@ -13,7 +13,7 @@ const A = { "x-admin-password": "clave-de-prueba-1" };
 let r = await orders(post("/api/orders", { code: "JH-ABC234", items: [{ key: "chocolate|p", qty: 2 }, { key: "caja-mix-10|c", qty: 1 }], mode: "delivery", city: "La Paz", zone: "Sopocachi", address: "Calle 1", name: "Ana <b>", clientTotal: 1 }));
 let j = await r.json();
 ok(r.status === 200 && j.code === "JH-ABC234", "pedido válido se guarda con su código");
-ok(j.total === 65 * 2 + 92 + 6, "el servidor recalcula el total (228), ignora el del navegador");
+ok(j.total === 75 * 2 + 92 + 6, "el servidor recalcula el total (248), ignora el del navegador");
 r = await orders(post("/api/orders", { items: [{ key: "chocolate|u", qty: -1 }], mode: "pickup", name: "x" })); ok(r.status === 400, "cantidad negativa rechazada");
 r = await orders(post("/api/orders", { items: [{ key: "hack|u", qty: 1 }], mode: "pickup", name: "x" })); ok(r.status === 400, "producto inexistente rechazado");
 r = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 1 }], mode: "delivery", city: "La Paz", zone: "Marte", address: "a", name: "x" })); ok(r.status === 400, "zona falsa rechazada");
@@ -25,7 +25,7 @@ r = await admin(post("/api/admin/orders", null, { "x-admin-password": "mala" }, 
 r = await admin(post("/api/admin/orders", null, A, "GET")); j = await r.json(); ok(j.orders.length === 2, "admin lista 2 pedidos");
 ok(!j.orders.some((o) => o.name.includes("<")), "se limpian < > del nombre");
 r = await admin(post("/api/admin/orders", { code: "JH-ABC234", status: "entregado" }, A, "PATCH")); ok(r.status === 200, "cambiar estado");
-r = await admin(post("/api/admin/stats", null, A, "GET")); j = await r.json(); ok(j.orders === 2 && j.revenue === 228 + 24, "estadísticas: 2 pedidos, Bs 252");
+r = await admin(post("/api/admin/stats", null, A, "GET")); j = await r.json(); ok(j.orders === 2 && j.revenue === 248 + 24, "estadísticas: 2 pedidos, Bs 252");
 r = await admin(post("/api/admin/soldout", { ids: ["oreo", "falso"] }, A)); j = await r.json(); ok(j.ids.length === 1 && j.ids[0] === "oreo", "agotado solo acepta sabores reales");
 r = await catalog(); j = await r.json(); ok(j.soldOut[0] === "oreo", "el catálogo público refleja el agotado");
 r = await admin(post("/api/admin/export.csv", null, A, "GET")); const t = await r.text(); ok(t.includes("'=cmd"), "CSV neutraliza fórmulas");
