@@ -43,6 +43,9 @@ r = await catalog(); j = await r.json(); ok(j.prices["chocolate|u"] === 8 && j.c
 r = await orders(post("/api/orders", { items: [{ key: "chocolate|u", qty: 2 }], mode: "delivery", city: "La Paz", zone: "Centro", address: "a", name: "z" }, { "x-forwarded-for": "5.5.5.5" })); j = await r.json();
 ok(j.total === 8 * 2 + 5, "el pedido usa los precios y envío nuevos (21)");
 r = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 1 }], mode: "delivery", city: "La Paz", zone: "Sopocachi", address: "a", name: "z" }, { "x-forwarded-for": "5.5.5.6" })); ok(r.status === 400, "zona que ya no existe es rechazada");
+r = await admin(post("/api/admin/content", { links: [{ label: "Grupo", url: "javascript:alert(1)" }] }, A, "PUT")); ok(r.status === 400, "enlace javascript: rechazado");
+r = await admin(post("/api/admin/content", { links: [{ label: "Grupo clientes", url: "https://chat.whatsapp.com/abc" }] }, A, "PUT")); j = await r.json(); ok(r.status === 200 && j.content.links.length === 1, "enlace de grupo guardado");
+r = await catalog(); j = await r.json(); ok(j.content.links[0].label === "Grupo clientes", "el catálogo público trae los enlaces");
 delete process.env.ADMIN_PASSWORD; r = await admin(post("/api/admin/orders", null, A, "GET")); ok(r.status === 503, "sin ADMIN_PASSWORD el panel queda cerrado");
 process.env.ADMIN_PASSWORD = "clave-de-prueba-1";
 let last; for (let i = 0; i < 12; i++) last = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 1 }], mode: "pickup", name: "r" }, { "x-forwarded-for": "9.9.9.9" }));

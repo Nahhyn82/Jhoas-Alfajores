@@ -19,7 +19,7 @@ label.chk{display:inline-flex;gap:6px;align-items:center;margin:4px 10px 4px 0}.
 <div class="row"><input id="pw" type="password" class="grow" autocomplete="current-password"><button id="go">Entrar</button></div><p class="err" id="lerr"></p></div>
 <div id="app" hidden>
 <div class="row"><button class="ghost" id="reload">Actualizar</button><button class="ghost" id="csv">Descargar CSV (Excel)</button><button class="ghost" id="out">Salir</button></div>
-<div class="row tabs"><button data-tab="t-ped">Pedidos</button><button class="ghost" data-tab="t-prod">Productos y precios</button><button class="ghost" data-tab="t-img">Fotos</button><button class="ghost" data-tab="t-txt">Textos</button><button class="ghost" data-tab="t-env">Envío y teléfono</button></div>
+<div class="row tabs"><button data-tab="t-ped">Pedidos</button><button class="ghost" data-tab="t-prod">Productos y precios</button><button class="ghost" data-tab="t-img">Fotos</button><button class="ghost" data-tab="t-txt">Textos</button><button class="ghost" data-tab="t-env">Envío y teléfono</button><button class="ghost" data-tab="t-lnk">Grupos y enlaces</button></div>
 <div id="t-ped" class="tab">
 <h2>Resumen</h2><div class="kpis" id="kpis"></div>
 <h2>Más vendidos (unidades pedidas)</h2><div class="card" id="flavors"></div>
@@ -29,6 +29,7 @@ label.chk{display:inline-flex;gap:6px;align-items:center;margin:4px 10px 4px 0}.
 <div id="t-img" class="tab" hidden><h2>Fotos</h2><p>Toca "Cambiar foto" y elige una imagen. Se achica sola para que la página siga rápida.</p><div id="imglist"></div><button class="save">Guardar cambios</button></div>
 <div id="t-txt" class="tab" hidden><h2>Textos de la página</h2><p>En el título principal, rodea con *asteriscos* la palabra que va resaltada.</p><div id="txtlist"></div><button class="save">Guardar cambios</button></div>
 <div id="t-env" class="tab" hidden><h2>Teléfono de WhatsApp</h2><p>Solo números con código de país, ej: 59163223438</p><input id="phone" inputmode="numeric"><h2>Tarifas de envío</h2><p>Una zona por línea, así: <code>Sopocachi = 6</code></p><div id="zonelist"></div><button class="save">Guardar cambios</button></div>
+<div id="t-lnk" class="tab" hidden><h2>Grupos y enlaces</h2><p>Agrega el grupo o canal de WhatsApp, WhatsApp Business, Instagram, TikTok, etc. Aparecen como botones en la sección "Únete a nuestra comunidad". Si no hay ninguno, la sección no se muestra.</p><div id="lnklist"></div><button class="ghost" id="addlnk">+ Agregar enlace</button> <button class="save">Guardar cambios</button></div>
 <p id="msg" class="ok"></p>
 </div>
 <script>
@@ -63,7 +64,7 @@ $("savesold").onclick=async function(){var ids=[].map.call(document.querySelecto
 $("csv").onclick=async function(){var r=await api("export.csv");var b=await r.blob();var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="pedidos-jhoas.csv";a.click()};
 
 var DEF=null,CONTENT={texts:{},images:{},alts:{},prices:{},names:{},descs:{},zones:{},phone:""},UP={};
-var LABELS={"hero-eyebrow":"Inicio: etiqueta pequeña","hero-h1":"Inicio: título principal","hero-lead":"Inicio: texto bajo el título","hero-caption":"Inicio: pie de la foto","story-slogan":"Nosotros: eslogan","story-eyebrow":"Nosotros: etiqueta","story-h2":"Nosotros: título","story-p":"Nosotros: párrafo","story-quote":"Nosotros: frase","fact1-num":"Dato 1: número","fact1-label":"Dato 1: texto","fact2-num":"Dato 2: número","fact2-label":"Dato 2: texto","value1":"Valor 1","value2":"Valor 2","value3":"Valor 3","menu-classic":"Título línea clásica","menu-special":"Título línea especial","menu-boxes":"Título cajas","menu-note":"Nota de disponibilidad","strip-h2":"Título galería","contact-h2":"Contacto: título","contact-p":"Contacto: texto","footer-text":"Pie de página"};
+var LABELS={"community-h2":"Comunidad: título","hero-eyebrow":"Inicio: etiqueta pequeña","hero-h1":"Inicio: título principal","hero-lead":"Inicio: texto bajo el título","hero-caption":"Inicio: pie de la foto","story-slogan":"Nosotros: eslogan","story-eyebrow":"Nosotros: etiqueta","story-h2":"Nosotros: título","story-p":"Nosotros: párrafo","story-quote":"Nosotros: frase","fact1-num":"Dato 1: número","fact1-label":"Dato 1: texto","fact2-num":"Dato 2: número","fact2-label":"Dato 2: texto","value1":"Valor 1","value2":"Valor 2","value3":"Valor 3","menu-classic":"Título línea clásica","menu-special":"Título línea especial","menu-boxes":"Título cajas","menu-note":"Nota de disponibilidad","strip-h2":"Título galería","contact-h2":"Contacto: título","contact-p":"Contacto: texto","footer-text":"Pie de página"};
 function say(m,bad){var e=$("msg");e.textContent=m;e.className=bad?"err":"ok";setTimeout(function(){e.textContent=""},4000)}
 async function loadDefaults(){
  var h=await (await fetch("/index.html")).text(),d=new DOMParser().parseFromString(h,"text/html");
@@ -81,10 +82,13 @@ function draw(){
  $("imglist").innerHTML=DEF.imgs.map(function(i,n){var cur=CONTENT.images[i.src]?"/api/img/"+CONTENT.images[i.src]:"/"+i.src;return '<div class="card"><img src="'+esc(cur)+'" id="im'+n+'"><small>'+esc(i.src)+'</small><label>Descripción de la foto (para accesibilidad)<input data-a="'+esc(i.src)+'" value="'+esc(CONTENT.alts[i.src]!=null?CONTENT.alts[i.src]:i.alt)+'"></label><input type="file" accept="image/*" data-f="'+n+'"> '+(CONTENT.images[i.src]?'<button class="ghost" data-r="'+esc(i.src)+'">Volver a la original</button>':'')+'</div>'}).join("");
  $("txtlist").innerHTML=Object.keys(DEF.texts).map(function(k){var v=CONTENT.texts[k]!=null?CONTENT.texts[k]:DEF.texts[k];return '<label>'+esc(LABELS[k]||k)+(v.length>70?'<textarea data-t="'+k+'">'+esc(v)+'</textarea>':'<input data-t="'+k+'" value="'+esc(v)+'">')+'</label>'}).join("");
  $("phone").value=CONTENT.phone||"59163223438";
+ drawLinks();
  var z=CONTENT.zones;if(!Object.keys(z).length)z=DEFZ;
  $("zonelist").innerHTML=Object.keys(z).map(function(c){return '<label>'+esc(c)+'<textarea data-z="'+esc(c)+'">'+Object.keys(z[c]).map(function(k){return k+" = "+z[c][k]}).join("\n")+'</textarea></label>'}).join("");
 }
 var DEFZ={};
+function drawLinks(){$("lnklist").innerHTML=(CONTENT.links||[]).map(function(l,i){return '<div class="card"><label>Texto del botón<input data-ll="'+i+'" value="'+esc(l.label)+'" maxlength="40" placeholder="Grupo de WhatsApp"></label><label>Enlace (https://...)<input data-lu="'+i+'" value="'+esc(l.url)+'" placeholder="https://chat.whatsapp.com/..."></label><button class="ghost" data-del="'+i+'">Quitar</button></div>'}).join("")||"<p>Aún no hay enlaces.</p>"}
+function readLinks(){return [].map.call(document.querySelectorAll("[data-ll]"),function(e){return{label:e.value.trim(),url:document.querySelector('[data-lu="'+e.dataset.ll+'"]').value.trim()}}).filter(function(l){return l.label||l.url})}
 function collect(){
  var c={texts:{},images:Object.assign({},CONTENT.images),alts:{},prices:{},names:{},descs:{},zones:{},phone:$("phone").value.trim()};
  document.querySelectorAll("[data-t]").forEach(function(e){if(e.value!==DEF.texts[e.dataset.t])c.texts[e.dataset.t]=e.value});
@@ -94,6 +98,7 @@ function collect(){
  DEF.imgs.forEach(function(i){var e=document.querySelector('[data-a="'+i.src.replace(/"/g,"")+'"]');if(e&&e.value!==i.alt)c.alts[i.src]=e.value});
  document.querySelectorAll("[data-z]").forEach(function(e){var o={};e.value.split("\n").forEach(function(l){var m=/^(.+?)\s*=\s*(\d+)\s*$/.exec(l.trim());if(m)o[m[1].trim()]=parseInt(m[2],10)});c.zones[e.dataset.z]=o});
  if(c.phone==="59163223438")c.phone="";
+ c.links=readLinks();
  return c}
 async function saveAll(){
  var r=await api("content",{method:"PUT",body:JSON.stringify(collect())});
@@ -106,6 +111,8 @@ document.addEventListener("change",async function(e){var f=e.target;if(f.dataset
 document.addEventListener("click",function(e){var b=e.target;
  if(b.dataset.tab){document.querySelectorAll(".tab").forEach(function(t){t.hidden=t.id!==b.dataset.tab});document.querySelectorAll(".tabs button").forEach(function(x){x.className=x===b?"":"ghost"})}
  if(b.classList.contains("save"))saveAll();
+ if(b.id==="addlnk"){CONTENT.links=readLinks();CONTENT.links.push({label:"",url:""});drawLinks()}
+ if(b.dataset.del!=null){CONTENT.links=readLinks();CONTENT.links.splice(+b.dataset.del,1);drawLinks()}
  if(b.dataset.r){delete CONTENT.images[b.dataset.r];saveAll()}});
 if(PW)login();
 </script></main></body></html>

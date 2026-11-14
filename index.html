@@ -379,6 +379,13 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
     </div>
   </section>
 
+  <section class="section" id="comunidad" hidden>
+    <div class="wrap">
+      <div class="section-head"><div><span class="eyebrow">Comunidad</span><h2 data-ed="community-h2">Únete a nuestra comunidad</h2></div></div>
+      <div class="cta" id="community-links"></div>
+    </div>
+  </section>
+
   <section class="section contact" id="contacto">
     <div class="wrap">
       <div class="box">
@@ -524,6 +531,16 @@ function applyContent(c){
   if(c.zones && Object.keys(c.zones).length){
     ZONES = {}; Object.keys(c.zones).forEach(function(city){ ZONES[city] = Object.keys(c.zones[city]).map(function(z){ return [z, c.zones[city][z]]; }); });
     var sel = $("zone"); while(sel.options.length > 1) sel.remove(1); fillZones();
+  }
+  var ls = c.links || [], box = $("community-links");
+  if(box){
+    box.innerHTML = "";
+    ls.forEach(function(l){
+      var a = document.createElement("a"); a.className = "btn ghost"; a.href = l.url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.textContent = l.label;
+      a.addEventListener("click", function(){ track("community_click", { label: l.label }); });
+      box.appendChild(a);
+    });
+    $("comunidad").hidden = ls.length === 0;
   }
   if(c.phone){
     WA_NUMBER = c.phone;
