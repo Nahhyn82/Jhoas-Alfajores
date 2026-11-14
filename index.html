@@ -194,9 +194,9 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
   <section class="hero">
     <div class="wrap">
       <div>
-        <span class="eyebrow">Alfajores artesanales</span>
-        <h1>Suavidad que <em>derrite</em> en cada mordida</h1>
-        <p class="lead">Llevamos 18 años haciendo alfajores. Cada sabor se piensa, se prueba y se envuelve a mano, para que se te antoje antes del primer bocado.</p>
+        <span class="eyebrow" data-ed="hero-eyebrow">Alfajores artesanales</span>
+        <h1 data-ed="hero-h1" data-em="1">Suavidad que <em>derrite</em> en cada mordida</h1>
+        <p class="lead" data-ed="hero-lead">Llevamos 18 años haciendo alfajores. Cada sabor se piensa, se prueba y se envuelve a mano, para que se te antoje antes del primer bocado.</p>
         <div class="cta">
           <a class="btn" href="#presentacion">Conócenos</a>
           <a class="btn ghost" href="#sabores">Ver los sabores</a>
@@ -204,7 +204,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
       </div>
       <figure>
         <img src="img/pink-1.jpg" alt="Alfajor Pink Velvet con cobertura rosada junto a dos alfajores envueltos en papel fucsia" width="1050" height="1100">
-        <figcaption>Pink Velvet</figcaption>
+        <figcaption data-ed="hero-caption">Pink Velvet</figcaption>
       </figure>
     </div>
   </section>
@@ -213,18 +213,18 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
     <div class="wrap">
       <div class="logo-col">
         <img class="logo" src="img/logo.png" alt="Logo de Jhoa's Alfajores" width="480" height="480">
-        <p class="slogan">Suavidad que derrite en cada mordida</p>
+        <p class="slogan" data-ed="story-slogan">Suavidad que derrite en cada mordida</p>
       </div>
       <div>
-        <span class="eyebrow">Quiénes somos</span>
-        <h2>Alfajores hechos con creatividad</h2>
-        <p>Jhoa's entró al mercado hace 18 años apostando por los alfajores. Lo más importante para nosotros es la creatividad de Andrea y la innovación en cada sabor.</p>
-        <p class="quote">Nadie necesita convencerse del sabor de Jhoa's. Lo que hace falta es desearlo antes de probarlo.</p>
+        <span class="eyebrow" data-ed="story-eyebrow">Quiénes somos</span>
+        <h2 data-ed="story-h2">Alfajores hechos con creatividad</h2>
+        <p data-ed="story-p">Jhoa's entró al mercado hace 18 años apostando por los alfajores. Lo más importante para nosotros es la creatividad de Andrea y la innovación en cada sabor.</p>
+        <p class="quote" data-ed="story-quote">Nadie necesita convencerse del sabor de Jhoa's. Lo que hace falta es desearlo antes de probarlo.</p>
         <div class="facts">
-          <div><strong>18</strong><span>años en el mercado</span></div>
-          <div><strong>10</strong><span>sabores en la carta</span></div>
+          <div><strong data-ed="fact1-num">18</strong><span data-ed="fact1-label">años en el mercado</span></div>
+          <div><strong data-ed="fact2-num">10</strong><span data-ed="fact2-label">sabores en la carta</span></div>
         </div>
-        <ul class="values" aria-label="Valores de la marca"><li>Innovación</li><li>Creatividad</li><li>Autenticidad</li></ul>
+        <ul class="values" aria-label="Valores de la marca"><li data-ed="value1">Innovación</li><li data-ed="value2">Creatividad</li><li data-ed="value3">Autenticidad</li></ul>
       </div>
     </div>
   </section>
@@ -232,10 +232,10 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
   <section class="section" id="sabores">
     <div class="wrap">
       <div class="section-head">
-        <div><span class="eyebrow">Menú</span><h2>Línea clásica</h2></div>
+        <div><span class="eyebrow">Menú</span><h2 data-ed="menu-classic">Línea clásica</h2></div>
         <p class="pricebar"><span>Unidad <b>Bs 7</b></span><span>Paquete de 10 <b>Bs 65</b></span></p>
       </div>
-      <p class="note">La disponibilidad de cada sabor se confirma contigo por WhatsApp al recibir tu pedido.</p>
+      <p class="note" data-ed="menu-note">La disponibilidad de cada sabor se confirma contigo por WhatsApp al recibir tu pedido.</p>
       <div class="grid">
         <article class="card">
           <img src="img/chocolate-1.jpg" alt="Alfajor de chocolate envuelto en papel plateado junto a uno con baño de chocolate" loading="lazy">
@@ -294,7 +294,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
       </div>
 
       <div class="section-head sub">
-        <div><span class="eyebrow">Menú</span><h2>Línea especial</h2></div>
+        <div><span class="eyebrow">Menú</span><h2 data-ed="menu-special">Línea especial</h2></div>
         <p class="pricebar"><span>Unidad <b>Bs 9</b></span><span>Paquete de 10 <b>Bs 85</b></span></p>
       </div>
       <div class="grid">
@@ -337,7 +337,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
       </div>
 
       <div class="section-head sub">
-        <div><span class="eyebrow">Para regalar</span><h2>Cajas</h2></div>
+        <div><span class="eyebrow">Para regalar</span><h2 data-ed="menu-boxes">Cajas</h2></div>
       </div>
       <div class="grid boxes">
         <article class="card box">
@@ -364,7 +364,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 
   <section class="section">
     <div class="wrap">
-      <div class="section-head"><div><span class="eyebrow">Por dentro</span><h2>Mira cómo son</h2></div></div>
+      <div class="section-head"><div><span class="eyebrow">Por dentro</span><h2 data-ed="strip-h2">Mira cómo son</h2></div></div>
       <div class="strip">
         <img src="img/red-2.jpg" alt="Alfajores Red Velvet partidos apilados sobre uno envuelto" loading="lazy">
         <img src="img/oreo-2.jpg" alt="Corte de un alfajor Oreo con capas de galleta, crema y relleno de dulce" loading="lazy">
@@ -379,8 +379,8 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
       <div class="box">
         <div>
           <span class="eyebrow">Pedidos</span>
-          <h2>Arma tu pedido</h2>
-          <p style="color:var(--muted);margin-bottom:22px">Agrega tus alfajores al carrito, elige tu zona y envíanos el pedido por WhatsApp. También puedes escribirnos directo.</p>
+          <h2 data-ed="contact-h2">Arma tu pedido</h2>
+          <p style="color:var(--muted);margin-bottom:22px" data-ed="contact-p">Agrega tus alfajores al carrito, elige tu zona y envíanos el pedido por WhatsApp. También puedes escribirnos directo.</p>
           <div class="cta"><button class="btn" type="button" data-open-cart>Abrir carrito</button>
           <a class="btn ghost" href="https://wa.me/59163223438" target="_blank" rel="noopener">Escribir por WhatsApp</a></div>
         </div>
@@ -394,7 +394,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 </main>
 
 <footer>
-  <div class="wrap"><span>Jhoa's · alfajores artesanales</span><span><a href="https://www.instagram.com/jhoastreats/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.facebook.com/jhoastreats/?locale=es_LA" target="_blank" rel="noopener">Facebook</a></span></div>
+  <div class="wrap"><span data-ed="footer-text">Jhoa's · alfajores artesanales</span><span><a href="https://www.instagram.com/jhoastreats/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.facebook.com/jhoastreats/?locale=es_LA" target="_blank" rel="noopener">Facebook</a></span></div>
 </footer>
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-msg"></span><button type="button" data-open-cart>Ver carrito</button></div>
@@ -476,10 +476,65 @@ var KEY = "jhoas-cart-v1";
 function load(){ try{ var r = localStorage.getItem(KEY); if(r) cart = JSON.parse(r) || {}; }catch(e){ cart = {}; } }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cart)); }catch(e){} }
 function money(n){ return "Bs " + n; }
+/* ---- Contenido editable desde /admin/ (textos, fotos, precios, zonas, teléfono) ---- */
+function setEm(el, txt){
+  while(el.firstChild) el.removeChild(el.firstChild);
+  String(txt).split(/\*([^*]+)\*/).forEach(function(part, i){
+    if(!part) return;
+    if(i % 2){ var em = document.createElement("em"); em.textContent = part; el.appendChild(em); }
+    else el.appendChild(document.createTextNode(part));
+  });
+}
+function bsPrice(k){ var b = document.querySelector('[data-add="' + k + '"]'); return b ? b.dataset.price : ""; }
+function applyContent(c){
+  if(!c) return;
+  var t = c.texts || {};
+  document.querySelectorAll("[data-ed]").forEach(function(el){
+    var k = el.getAttribute("data-ed"); if(t[k] == null) return;
+    if(el.hasAttribute("data-em")) setEm(el, t[k]); else el.textContent = t[k];
+  });
+  var im = c.images || {}, al = c.alts || {};
+  document.querySelectorAll("img").forEach(function(img){
+    var s = img.getAttribute("data-orig") || img.getAttribute("src"); img.setAttribute("data-orig", s);
+    if(im[s]) img.src = "/api/img/" + im[s];
+    if(al[s]) img.alt = al[s];
+  });
+  var pr = c.prices || {}, nm = c.names || {}, ds = c.descs || {};
+  document.querySelectorAll("article.card").forEach(function(card){
+    var btns = card.querySelectorAll("[data-add]"); if(!btns.length) return;
+    var fl = btns[0].getAttribute("data-add").split("|")[0];
+    if(nm[fl]){ card.querySelector("h3").textContent = nm[fl]; btns.forEach(function(b){ b.dataset.name = nm[fl]; }); }
+    if(ds[fl] != null && ds[fl] !== "") card.querySelector(".tag").textContent = ds[fl];
+    btns.forEach(function(b){ var v = pr[b.getAttribute("data-add")]; if(v != null) b.dataset.price = v; });
+    var u = card.querySelector('[data-add$="|u"]'), p = card.querySelector('[data-add$="|p"]'), c1 = card.querySelector('[data-add$="|c"]');
+    var pe = card.querySelector(".price");
+    if(pe && u && p) pe.textContent = "Bs " + u.dataset.price + " c/u · paquete de 10: Bs " + p.dataset.price;
+    else if(pe && c1) pe.textContent = "Bs " + c1.dataset.price;
+  });
+  var bars = document.querySelectorAll(".pricebar");
+  [["chocolate"], ["red-velvet"]].forEach(function(x, i){
+    var bs = bars[i] && bars[i].querySelectorAll("b");
+    if(bs && bs.length > 1){ bs[0].textContent = "Bs " + bsPrice(x[0] + "|u"); bs[1].textContent = "Bs " + bsPrice(x[0] + "|p"); }
+  });
+  if(c.zones && Object.keys(c.zones).length){
+    ZONES = {}; Object.keys(c.zones).forEach(function(city){ ZONES[city] = Object.keys(c.zones[city]).map(function(z){ return [z, c.zones[city][z]]; }); });
+    var sel = $("zone"); while(sel.options.length > 1) sel.remove(1); fillZones();
+  }
+  if(c.phone){
+    WA_NUMBER = c.phone;
+    document.querySelectorAll('a[href*="wa.me/"]').forEach(function(a){
+      a.setAttribute("href", a.getAttribute("href").replace(/wa\.me\/\d+/, "wa.me/" + c.phone));
+      if(/^\+\d/.test(a.textContent.trim())) a.textContent = "+" + (c.phone.indexOf("591") === 0 ? "591 " + c.phone.slice(3) : c.phone);
+    });
+  }
+  Object.keys(cart).forEach(function(k){ var b = document.querySelector('[data-add="' + k + '"]'); if(b){ cart[k].price = Number(b.dataset.price); cart[k].name = b.dataset.name; } });
+  save(); render();
+}
 /* ---- Backend (Netlify Functions). Si falla, la página sigue funcionando por WhatsApp. ---- */
 var orderCode = null;
 function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s = "JH-", b = new Uint8Array(6); (window.crypto || window.msCrypto).getRandomValues(b); for(var i = 0; i < 6; i++) s += A[b[i] % A.length]; return s; }
 function applyCatalog(c){
+  applyContent(c && c.content);
   var out = (c && c.soldOut) || [];
   document.querySelectorAll("[data-add]").forEach(function(btn){
     var id = btn.getAttribute("data-add").split("|")[0];

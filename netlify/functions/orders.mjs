@@ -1,7 +1,8 @@
 import { json, readJson, clean } from "../lib/http.mjs";
 import { getDb } from "../lib/store.mjs";
 import { hit } from "../lib/auth.mjs";
-import { PRODUCTS, ZONES, MAX_QTY_PER_LINE, MAX_LINES } from "../lib/catalog.mjs";
+import { MAX_QTY_PER_LINE, MAX_LINES } from "../lib/catalog.mjs";
+import { effective } from "../lib/content.mjs";
 
 const CODE = /^JH-[A-Z0-9]{6}$/;
 const ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -16,6 +17,7 @@ export default async (req) => {
     if (!(await hit(req, "orders", 10, 600))) return json({ error: "demasiados_pedidos" }, 429);
     const b = await readJson(req);
 
+    const { products: PRODUCTS, zones: ZONES } = await effective();
     const lines = Array.isArray(b.items) ? b.items.slice(0, MAX_LINES) : [];
     const items = [];
     let subtotal = 0;

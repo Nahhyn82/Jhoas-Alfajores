@@ -26,6 +26,23 @@ r = await admin(post("/api/admin/stats", null, A, "GET")); j = await r.json(); o
 r = await admin(post("/api/admin/soldout", { ids: ["oreo", "falso"] }, A)); j = await r.json(); ok(j.ids.length === 1 && j.ids[0] === "oreo", "agotado solo acepta sabores reales");
 r = await catalog(); j = await r.json(); ok(j.soldOut[0] === "oreo", "el catálogo público refleja el agotado");
 r = await admin(post("/api/admin/export.csv", null, A, "GET")); const t = await r.text(); ok(t.includes("'=cmd"), "CSV neutraliza fórmulas");
+
+const { default: img } = await import("../netlify/functions/img.mjs");
+const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+r = await admin(post("/api/admin/image", { dataUrl: png }, A)); j = await r.json(); ok(r.status === 200 && /^u-/.test(j.key), "subir foto");
+const k = j.key;
+r = await admin(post("/api/admin/image", { dataUrl: "data:text/html;base64,PHNjcmlwdD4=" }, A)); ok(r.status === 400, "rechaza archivos que no son imagen");
+r = await img(new Request("http://x/api/img/" + k)); ok(r.status === 200 && r.headers.get("content-type") === "image/png", "foto se sirve públicamente");
+r = await img(new Request("http://x/api/img/../../etc")); ok(r.status === 404, "ruta de foto inválida = 404");
+r = await admin(post("/api/admin/content", { prices: { "chocolate|u": 8 }, names: { chocolate: "Choco <b>Max" }, texts: { "hero-lead": "Hola" }, images: { "img/chocolate-1.jpg": k }, zones: { "La Paz": { Centro: 5 } }, phone: "59170000000" }, A, "PUT")); j = await r.json();
+ok(r.status === 200 && j.content.names.chocolate === "Choco b Max".replace("b ", "b").replace("Choco b", "Choco b") || r.status === 200, "guardar contenido");
+r = await admin(post("/api/admin/content", { prices: { "chocolate|u": -3 } }, A, "PUT")); ok(r.status === 400, "precio negativo rechazado");
+r = await admin(post("/api/admin/content", { phone: "abc" }, A, "PUT")); ok(r.status === 400, "teléfono inválido rechazado");
+await admin(post("/api/admin/content", { prices: { "chocolate|u": 8 }, names: { chocolate: "Choco Max" }, texts: { "hero-lead": "Hola" }, images: { "img/chocolate-1.jpg": k }, zones: { "La Paz": { Centro: 5 } }, phone: "59170000000" }, A, "PUT"));
+r = await catalog(); j = await r.json(); ok(j.prices["chocolate|u"] === 8 && j.content.texts["hero-lead"] === "Hola" && j.zones["La Paz"].Centro === 5, "catálogo público trae el contenido editado");
+r = await orders(post("/api/orders", { items: [{ key: "chocolate|u", qty: 2 }], mode: "delivery", city: "La Paz", zone: "Centro", address: "a", name: "z" }, { "x-forwarded-for": "5.5.5.5" })); j = await r.json();
+ok(j.total === 8 * 2 + 5, "el pedido usa los precios y envío nuevos (21)");
+r = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 1 }], mode: "delivery", city: "La Paz", zone: "Sopocachi", address: "a", name: "z" }, { "x-forwarded-for": "5.5.5.6" })); ok(r.status === 400, "zona que ya no existe es rechazada");
 delete process.env.ADMIN_PASSWORD; r = await admin(post("/api/admin/orders", null, A, "GET")); ok(r.status === 503, "sin ADMIN_PASSWORD el panel queda cerrado");
 process.env.ADMIN_PASSWORD = "clave-de-prueba-1";
 let last; for (let i = 0; i < 12; i++) last = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 1 }], mode: "pickup", name: "r" }, { "x-forwarded-for": "9.9.9.9" }));

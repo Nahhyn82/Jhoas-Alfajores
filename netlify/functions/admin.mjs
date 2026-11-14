@@ -2,6 +2,8 @@ import { json, readJson, clean } from "../lib/http.mjs";
 import { getDb } from "../lib/store.mjs";
 import { passwordOk, adminConfigured, hit } from "../lib/auth.mjs";
 import { PRODUCTS } from "../lib/catalog.mjs";
+import { validateContent } from "../lib/content.mjs";
+import { createHash } from "node:crypto";
 
 const STATUSES = ["nuevo", "confirmado", "entregado", "cancelado"];
 
@@ -47,6 +49,24 @@ export default async (req) => {
         for (const i of o.items) { const p = PRODUCTS[i.key]; const f = p ? p.name : i.name; byFlavor[f] = (byFlavor[f] || 0) + i.qty; }
       }
       return json({ orders: orders.length, revenue, byFlavor, byDay });
+    }
+
+    if (path.endsWith("/content")) {
+      const db = await getDb("config");
+      if (req.method === "GET") return json({ content: (await db.get("content")) || {} });
+      let clean_;
+      try { clean_ = validateContent(await readJson(req, 100000)); } catch (e) { return json({ error: e.status ? e.message : e.message || "invalido" }, e.status || 400); }
+      await db.setJSON("content", clean_);
+      return json({ ok: true, content: clean_ });
+    }
+
+    if (path.endsWith("/image") && req.method === "POST") {
+      const b = await readJson(req, 1200000);
+      const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(b.dataUrl || ""));
+      if (!m || m[2].length > 900000) return json({ error: "imagen_invalida_o_muy_grande" }, 400);
+      const key = "u-" + createHash("sha256").update(m[2]).digest("hex").slice(0, 16);
+      await (await getDb("images")).setJSON(key, { type: m[1], b64: m[2] });
+      return json({ ok: true, key });
     }
 
     if (path.endsWith("/soldout")) {

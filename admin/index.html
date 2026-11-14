@@ -12,17 +12,24 @@ button{background:#7a3b1d;color:#fff;border-color:#7a3b1d;cursor:pointer} button
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .kpi b{display:block;font-size:1.5rem}.tag{font-size:.8rem;padding:2px 8px;border-radius:99px;background:#eee}
 .tag.nuevo{background:#ffe3a3}.tag.confirmado{background:#cfe8ff}.tag.entregado{background:#cdeccd}.tag.cancelado{background:#f3c9c9}
-label.chk{display:inline-flex;gap:6px;align-items:center;margin:4px 10px 4px 0}.err{color:#a11}
+label.chk{display:inline-flex;gap:6px;align-items:center;margin:4px 10px 4px 0}.err{color:#a11}.ok{color:#176b2d;font-weight:700}.tab input,.tab textarea{width:100%;box-sizing:border-box;margin:4px 0 10px;font:inherit;padding:8px;border:1px solid #cdb9a8;border-radius:10px}.tab textarea{min-height:90px}.tab img{max-width:160px;border-radius:10px;display:block}.tabs button{flex:1}.card small{color:#7a6657}
 </style></head><body><main>
 <h1>Panel de pedidos · Jhoa's</h1>
 <div id="login" class="card"><p>Contraseña de administrador</p>
 <div class="row"><input id="pw" type="password" class="grow" autocomplete="current-password"><button id="go">Entrar</button></div><p class="err" id="lerr"></p></div>
 <div id="app" hidden>
 <div class="row"><button class="ghost" id="reload">Actualizar</button><button class="ghost" id="csv">Descargar CSV (Excel)</button><button class="ghost" id="out">Salir</button></div>
+<div class="row tabs"><button data-tab="t-ped">Pedidos</button><button class="ghost" data-tab="t-prod">Productos y precios</button><button class="ghost" data-tab="t-img">Fotos</button><button class="ghost" data-tab="t-txt">Textos</button><button class="ghost" data-tab="t-env">Envío y teléfono</button></div>
+<div id="t-ped" class="tab">
 <h2>Resumen</h2><div class="kpis" id="kpis"></div>
 <h2>Más vendidos (unidades pedidas)</h2><div class="card" id="flavors"></div>
 <h2>Sabores agotados</h2><div class="card" id="sold"></div><button id="savesold">Guardar agotados</button>
-<h2>Pedidos</h2><div id="orders"></div>
+<h2>Pedidos</h2><div id="orders"></div></div>
+<div id="t-prod" class="tab" hidden><h2>Productos y precios</h2><p>Cambia nombre, descripción y precio. Deja el cuadro en su valor original si no quieres cambiar nada.</p><div id="prodlist"></div><button class="save">Guardar cambios</button></div>
+<div id="t-img" class="tab" hidden><h2>Fotos</h2><p>Toca "Cambiar foto" y elige una imagen. Se achica sola para que la página siga rápida.</p><div id="imglist"></div><button class="save">Guardar cambios</button></div>
+<div id="t-txt" class="tab" hidden><h2>Textos de la página</h2><p>En el título principal, rodea con *asteriscos* la palabra que va resaltada.</p><div id="txtlist"></div><button class="save">Guardar cambios</button></div>
+<div id="t-env" class="tab" hidden><h2>Teléfono de WhatsApp</h2><p>Solo números con código de país, ej: 59163223438</p><input id="phone" inputmode="numeric"><h2>Tarifas de envío</h2><p>Una zona por línea, así: <code>Sopocachi = 6</code></p><div id="zonelist"></div><button class="save">Guardar cambios</button></div>
+<p id="msg" class="ok"></p>
 </div>
 <script>
 var PW=sessionStorage.getItem("jh_pw")||"",$=function(i){return document.getElementById(i)};
@@ -33,7 +40,7 @@ async function login(){PW=$("pw").value||PW;var r=await api("login");
  if(r.status===503){$("lerr").textContent="El panel aún no tiene contraseña: configura ADMIN_PASSWORD en Netlify.";return}
  if(r.status===429){$("lerr").textContent="Demasiados intentos, espera unos minutos.";return}
  if(!r.ok){$("lerr").textContent="Contraseña incorrecta.";return}
- sessionStorage.setItem("jh_pw",PW);$("login").hidden=true;$("app").hidden=false;load()}
+ sessionStorage.setItem("jh_pw",PW);$("login").hidden=true;$("app").hidden=false;load();loadDefaults()}
 async function load(){
  var st=await (await api("stats")).json();
  $("kpis").innerHTML='<div class="card kpi"><b>'+st.orders+'</b>pedidos (sin cancelados)</div><div class="card kpi"><b>Bs '+st.revenue+'</b>vendido</div>';
@@ -54,5 +61,51 @@ $("reload").onclick=load;$("out").onclick=function(){sessionStorage.removeItem("
 $("orders").onchange=async function(e){var s=e.target;if(!s.dataset.code)return;await api("orders",{method:"PATCH",body:JSON.stringify({code:s.dataset.code,status:s.value})});load()};
 $("savesold").onclick=async function(){var ids=[].map.call(document.querySelectorAll("#sold input:checked"),function(i){return i.value});await api("soldout",{method:"POST",body:JSON.stringify({ids:ids})});alert("Guardado")};
 $("csv").onclick=async function(){var r=await api("export.csv");var b=await r.blob();var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="pedidos-jhoas.csv";a.click()};
+
+var DEF=null,CONTENT={texts:{},images:{},alts:{},prices:{},names:{},descs:{},zones:{},phone:""},UP={};
+var LABELS={"hero-eyebrow":"Inicio: etiqueta pequeña","hero-h1":"Inicio: título principal","hero-lead":"Inicio: texto bajo el título","hero-caption":"Inicio: pie de la foto","story-slogan":"Nosotros: eslogan","story-eyebrow":"Nosotros: etiqueta","story-h2":"Nosotros: título","story-p":"Nosotros: párrafo","story-quote":"Nosotros: frase","fact1-num":"Dato 1: número","fact1-label":"Dato 1: texto","fact2-num":"Dato 2: número","fact2-label":"Dato 2: texto","value1":"Valor 1","value2":"Valor 2","value3":"Valor 3","menu-classic":"Título línea clásica","menu-special":"Título línea especial","menu-boxes":"Título cajas","menu-note":"Nota de disponibilidad","strip-h2":"Título galería","contact-h2":"Contacto: título","contact-p":"Contacto: texto","footer-text":"Pie de página"};
+function say(m,bad){var e=$("msg");e.textContent=m;e.className=bad?"err":"ok";setTimeout(function(){e.textContent=""},4000)}
+async function loadDefaults(){
+ var h=await (await fetch("/index.html")).text(),d=new DOMParser().parseFromString(h,"text/html");
+ DEF={texts:{},cards:[],imgs:[]};
+ d.querySelectorAll("[data-ed]").forEach(function(e){DEF.texts[e.getAttribute("data-ed")]=e.hasAttribute("data-em")?e.innerHTML.replace(/<em>(.*?)<\/em>/g,"*$1*"):e.textContent.trim()});
+ d.querySelectorAll("article.card").forEach(function(c){var bs=c.querySelectorAll("[data-add]");if(!bs.length)return;
+  DEF.cards.push({flavor:bs[0].getAttribute("data-add").split("|")[0],name:c.querySelector("h3").textContent,desc:c.querySelector(".tag").textContent,btns:[].map.call(bs,function(b){return{key:b.getAttribute("data-add"),label:b.dataset.label,price:Number(b.dataset.price)}})})});
+ var seen={};d.querySelectorAll("img").forEach(function(i){var s=i.getAttribute("src");if(seen[s]||s==="img/logo.png"&&false)return;seen[s]=1;DEF.imgs.push({src:s,alt:i.getAttribute("alt")||""})});
+ var m=/var ZONES = (\{[\s\S]*?\n\});/.exec(h);if(m){var zz=new Function('return '+m[1])();Object.keys(zz).forEach(function(c){DEFZ[c]={};zz[c].forEach(function(x){DEFZ[c][x[0]]=x[1]})})}
+ CONTENT=Object.assign(CONTENT,(await (await api("content")).json()).content||{});
+ ["texts","images","alts","prices","names","descs","zones"].forEach(function(k){CONTENT[k]=CONTENT[k]||{}});
+ draw()}
+function draw(){
+ $("prodlist").innerHTML=DEF.cards.map(function(c){return '<div class="card"><b>'+esc(c.name)+'</b><label>Nombre<input data-n="'+c.flavor+'" value="'+esc(CONTENT.names[c.flavor]||c.name)+'"></label><label>Descripción<textarea data-d="'+c.flavor+'">'+esc(CONTENT.descs[c.flavor]!=null?CONTENT.descs[c.flavor]:c.desc)+'</textarea></label>'+c.btns.map(function(b){return '<label>Precio '+esc(b.label)+' (Bs)<input type="number" min="1" data-p="'+b.key+'" value="'+(CONTENT.prices[b.key]!=null?CONTENT.prices[b.key]:b.price)+'"></label>'}).join("")+'</div>'}).join("");
+ $("imglist").innerHTML=DEF.imgs.map(function(i,n){var cur=CONTENT.images[i.src]?"/api/img/"+CONTENT.images[i.src]:"/"+i.src;return '<div class="card"><img src="'+esc(cur)+'" id="im'+n+'"><small>'+esc(i.src)+'</small><label>Descripción de la foto (para accesibilidad)<input data-a="'+esc(i.src)+'" value="'+esc(CONTENT.alts[i.src]!=null?CONTENT.alts[i.src]:i.alt)+'"></label><input type="file" accept="image/*" data-f="'+n+'"> '+(CONTENT.images[i.src]?'<button class="ghost" data-r="'+esc(i.src)+'">Volver a la original</button>':'')+'</div>'}).join("");
+ $("txtlist").innerHTML=Object.keys(DEF.texts).map(function(k){var v=CONTENT.texts[k]!=null?CONTENT.texts[k]:DEF.texts[k];return '<label>'+esc(LABELS[k]||k)+(v.length>70?'<textarea data-t="'+k+'">'+esc(v)+'</textarea>':'<input data-t="'+k+'" value="'+esc(v)+'">')+'</label>'}).join("");
+ $("phone").value=CONTENT.phone||"59163223438";
+ var z=CONTENT.zones;if(!Object.keys(z).length)z=DEFZ;
+ $("zonelist").innerHTML=Object.keys(z).map(function(c){return '<label>'+esc(c)+'<textarea data-z="'+esc(c)+'">'+Object.keys(z[c]).map(function(k){return k+" = "+z[c][k]}).join("\n")+'</textarea></label>'}).join("");
+}
+var DEFZ={};
+function collect(){
+ var c={texts:{},images:Object.assign({},CONTENT.images),alts:{},prices:{},names:{},descs:{},zones:{},phone:$("phone").value.trim()};
+ document.querySelectorAll("[data-t]").forEach(function(e){if(e.value!==DEF.texts[e.dataset.t])c.texts[e.dataset.t]=e.value});
+ DEF.cards.forEach(function(card){var n=document.querySelector('[data-n="'+card.flavor+'"]').value.trim(),d=document.querySelector('[data-d="'+card.flavor+'"]').value.trim();
+  if(n&&n!==card.name)c.names[card.flavor]=n;if(d!==card.desc)c.descs[card.flavor]=d;
+  card.btns.forEach(function(b){var v=parseInt(document.querySelector('[data-p="'+b.key+'"]').value,10);if(v&&v!==b.price)c.prices[b.key]=v})});
+ DEF.imgs.forEach(function(i){var e=document.querySelector('[data-a="'+i.src.replace(/"/g,"")+'"]');if(e&&e.value!==i.alt)c.alts[i.src]=e.value});
+ document.querySelectorAll("[data-z]").forEach(function(e){var o={};e.value.split("\n").forEach(function(l){var m=/^(.+?)\s*=\s*(\d+)\s*$/.exec(l.trim());if(m)o[m[1].trim()]=parseInt(m[2],10)});c.zones[e.dataset.z]=o});
+ if(c.phone==="59163223438")c.phone="";
+ return c}
+async function saveAll(){
+ var r=await api("content",{method:"PUT",body:JSON.stringify(collect())});
+ var j=await r.json();if(!r.ok){say("No se pudo guardar: "+(j.error||r.status),1);return}
+ CONTENT=j.content;say("Guardado. En la página se ve en menos de un minuto.");draw()}
+function resize(file){return new Promise(function(ok,bad){var img=new Image();img.onload=function(){var m=1100,k=Math.min(1,m/Math.max(img.width,img.height)),c=document.createElement("canvas");c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext("2d").drawImage(img,0,0,c.width,c.height);var q=.85,u=c.toDataURL("image/jpeg",q);while(u.length>800000&&q>.4){q-=.1;u=c.toDataURL("image/jpeg",q)}ok(u)};img.onerror=bad;img.src=URL.createObjectURL(file)})}
+document.addEventListener("change",async function(e){var f=e.target;if(f.dataset.f==null||!f.files[0])return;
+ try{var u=await resize(f.files[0]);var r=await api("image",{method:"POST",body:JSON.stringify({dataUrl:u})});var j=await r.json();if(!r.ok)throw 0;
+  CONTENT.images[DEF.imgs[f.dataset.f].src]=j.key;document.getElementById("im"+f.dataset.f).src=u;say('Foto cargada. Toca "Guardar cambios" para publicarla.')}catch(x){say("No se pudo subir la foto.",1)}});
+document.addEventListener("click",function(e){var b=e.target;
+ if(b.dataset.tab){document.querySelectorAll(".tab").forEach(function(t){t.hidden=t.id!==b.dataset.tab});document.querySelectorAll(".tabs button").forEach(function(x){x.className=x===b?"":"ghost"})}
+ if(b.classList.contains("save"))saveAll();
+ if(b.dataset.r){delete CONTENT.images[b.dataset.r];saveAll()}});
 if(PW)login();
 </script></main></body></html>
