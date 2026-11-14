@@ -8,11 +8,11 @@ const NAMES = {
 };
 export const PRODUCTS = {};
 classic.forEach((id) => {
-  PRODUCTS[id + "|u"] = { name: NAMES[id], label: "unidad", price: 7, flavor: id };
+  PRODUCTS[id + "|u"] = { name: NAMES[id], label: "unidad", price: 8, flavor: id };
   PRODUCTS[id + "|p"] = { name: NAMES[id], label: "paquete de 10", price: 65, flavor: id };
 });
 special.forEach((id) => {
-  PRODUCTS[id + "|u"] = { name: NAMES[id], label: "unidad", price: 9, flavor: id };
+  PRODUCTS[id + "|u"] = { name: NAMES[id], label: "unidad", price: 10, flavor: id };
   PRODUCTS[id + "|p"] = { name: NAMES[id], label: "paquete de 10", price: 85, flavor: id };
 });
 PRODUCTS["caja-mix-10|c"] = { name: "Caja mix de 10", label: "caja", price: 92, flavor: "caja-mix-10" };
@@ -30,5 +30,6 @@ export const ZONES = {
     "Río Seco": 20, "Villa Adela": 20, "Rosas Pampa": 22, "Santiago II": 22, Senkata: 25
   }
 };
+export const FIRST_PURCHASE_PCT = 10; // % de descuento en la primera compra (solo con cuenta)
 export const MAX_QTY_PER_LINE = 50;
 export const MAX_LINES = 20;

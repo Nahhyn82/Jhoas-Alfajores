@@ -1,7 +1,7 @@
 import { json, readJson, clean } from "../lib/http.mjs";
 import { getDb } from "../lib/store.mjs";
 import { hit } from "../lib/auth.mjs";
-import { MAX_QTY_PER_LINE, MAX_LINES } from "../lib/catalog.mjs";
+import { MAX_QTY_PER_LINE, MAX_LINES, FIRST_PURCHASE_PCT } from "../lib/catalog.mjs";
 import { effective } from "../lib/content.mjs";
 import { currentCustomer } from "../lib/session.mjs";
 
@@ -50,9 +50,12 @@ export default async (req) => {
     const qrOn = !!(content.payment && content.payment.qrImage);
     const pay = b.pay === "qr" && qrOn ? "qr" : "efectivo";
     let cust = null; try { cust = await currentCustomer(req); } catch { /* sin sesión */ }
+    // 10 % en la primera compra: solo con cuenta, sobre los productos (no el envío).
+    const discount = cust && !cust.usedFirstDiscount ? Math.round((subtotal * FIRST_PURCHASE_PCT) / 100) : 0;
+    if (discount > 0) { cust.usedFirstDiscount = true; await (await getDb("customers")).setJSON(cust.cid, cust); }
     const order = {
       code, createdAt: new Date().toISOString(), status: "nuevo",
-      name, mode, city, zone, address, items, subtotal, shipping, total: subtotal + shipping,
+      name, mode, city, zone, address, items, subtotal, discount, shipping, total: subtotal - discount + shipping,
       pay, paid: false, customerId: cust ? cust.cid : null, customerEmail: cust ? cust.email : null,
       clientTotal: Number.isFinite(Number(b.clientTotal)) ? Number(b.clientTotal) : null
     };
