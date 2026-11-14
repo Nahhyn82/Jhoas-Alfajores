@@ -5,6 +5,7 @@ import { PRODUCTS } from "../lib/catalog.mjs";
 import { validateContent } from "../lib/content.mjs";
 import { createHash } from "node:crypto";
 import { handle as extra, syncOrderPayment } from "../lib/admin_extra.mjs";
+import { release } from "../lib/discount.mjs";
 
 const STATUSES = ["nuevo", "confirmado", "entregado", "cancelado"];
 
@@ -36,10 +37,7 @@ export default async (req) => {
       const o = await db.get(clean(b.code, 12));
       if (!o) return json({ error: "no_existe" }, 404);
       if (b.status != null) o.status = b.status;
-      if (b.status === "cancelado" && o.discount > 0 && o.customerId) {
-        const cdb = await getDb("customers"); const cu = await cdb.get(o.customerId);
-        if (cu && cu.usedFirstDiscount) { cu.usedFirstDiscount = false; await cdb.setJSON(cu.cid, cu); }
-      }
+      if (b.status === "cancelado" && o.discount > 0) await release(o.discountKeys);
       const payChanged = typeof b.paid === "boolean" && b.paid !== !!o.paid;
       if (typeof b.paid === "boolean") { o.paid = b.paid; o.paidAt = b.paid ? new Date().toISOString() : null; }
       o.updatedAt = new Date().toISOString();

@@ -420,7 +420,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
   <aside class="panel" role="dialog" aria-modal="true" aria-labelledby="acct-title">
     <header><h2 id="acct-title">Mi cuenta</h2><button class="iconbtn" type="button" id="acct-close" aria-label="Cerrar">×</button></header>
     <div id="acct-out">
-      <p>Ingresa con tu cuenta de Google para guardar tus datos, recibir promociones y un saludo en tu cumpleaños, y <b>llevarte 10% de descuento en tu primera compra</b>.</p>
+      <p>Ingresa con tu cuenta de Google para guardar tus datos y recibir promociones y un saludo en tu cumpleaños.</p>
       <div id="g-btn"></div>
       <p class="hint" id="acct-msg-out"></p>
     </div>
@@ -595,7 +595,9 @@ function applyContent(c){
   save(); render();
 }
 /* ---- Backend (Netlify Functions). Si falla, la página sigue funcionando por WhatsApp. ---- */
-var orderCode = null, GCID = "", me = null, FPCT = 0;
+var orderCode = null, GCID = "", me = null, FPCT = 0, ELIG = false;
+function deviceId(){ try{ var d = localStorage.getItem("jhoas-did"); if(!d || !/^[a-f0-9]{32}$/.test(d)){ var b = new Uint8Array(16); (window.crypto || window.msCrypto).getRandomValues(b); d = Array.prototype.map.call(b, function(x){ return ("0" + x.toString(16)).slice(-2); }).join(""); localStorage.setItem("jhoas-did", d); } return d; }catch(e){ return ""; } }
+function loadElig(){ fetch("/api/eligibility?d=" + deviceId(), { credentials: "same-origin" }).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){ if(j){ ELIG = !!j.eligible; if(j.pct) FPCT = j.pct; render(); } }).catch(function(){}); }
 function syncQr(){ $("qrbox").hidden = !($("f-pay").hidden === false && payMethod() === "qr"); }
 function api(url, method, body){
   return fetch(url, { method: method || "GET", credentials: "same-origin", headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, status: r.status, j: j }; }); });
@@ -607,7 +609,7 @@ function fillBirthday(){
   N.forEach(function(n, i){ var o = document.createElement("option"); o.value = ("0" + (i + 1)).slice(-2); o.textContent = n; m.appendChild(o); });
 }
 function showMe(c){
-  me = c; $("acct-out").hidden = !!c; $("acct-in").hidden = !c; render();
+  me = c; $("acct-out").hidden = !!c; $("acct-in").hidden = !c; render(); if(c) loadElig();
   $("acct-btn").textContent = c ? (c.name || "Mi cuenta").split(" ")[0] : "Ingresar";
   if(!c) return;
   fillBirthday(); $("acct-email").textContent = c.email; $("acct-name").value = c.name || "";
@@ -634,6 +636,7 @@ function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s = "JH-", b = n
 function applyCatalog(c){
   applyContent(c && c.content);
   if(c && c.firstPurchasePct) FPCT = c.firstPurchasePct;
+  loadElig();
   if(c && c.googleClientId){ GCID = c.googleClientId; $("acct-btn").hidden = false; loadMe(); }
   var out = (c && c.soldOut) || [];
   document.querySelectorAll("[data-add]").forEach(function(btn){
@@ -647,14 +650,14 @@ function postOrder(code, total){
   var items = Object.keys(cart).map(function(k){ return { key: k, qty: cart[k].qty }; });
   try{
     fetch("/api/orders", { method: "POST", keepalive: true, headers: { "content-type": "application/json" },
-      body: JSON.stringify({ code: code, items: items, mode: mode(), pay: payMethod(), city: city(), zone: $("zone").value, address: $("addr").value.trim(), name: $("cname").value.trim(), clientTotal: total }) }).catch(function(){});
+      body: JSON.stringify({ code: code, items: items, mode: mode(), pay: payMethod(), deviceId: deviceId(), city: city(), zone: $("zone").value, address: $("addr").value.trim(), name: $("cname").value.trim(), clientTotal: total }) }).catch(function(){});
   }catch(e){}
 }
 function $(id){ return document.getElementById(id); }
 
 var overlay = $("overlay"), linesEl = $("lines"), lastFocus = null;
 
-function discount(){ return me && me.firstPurchase && FPCT ? Math.round(subtotal() * FPCT / 100) : 0; }
+function discount(){ return ELIG && FPCT ? Math.round(subtotal() * FPCT / 100) : 0; }
 function subtotal(){ var t = 0; Object.keys(cart).forEach(function(k){ t += cart[k].price * cart[k].qty; }); return t; }
 function count(){ var c = 0; Object.keys(cart).forEach(function(k){ c += cart[k].qty; }); return c; }
 function mode(){ return document.querySelector('input[name="mode"]:checked').value; }
@@ -695,7 +698,7 @@ function render(){
   $("t-disc-row").hidden = dsc <= 0;
   if(dsc > 0){ $("t-disc-label").textContent = "Descuento 1ª compra (" + FPCT + "%)"; $("t-disc").textContent = "−" + money(dsc); }
   var bn = $("disc-banner");
-  if(FPCT && GCID && !me){ bn.hidden = false; bn.textContent = "Ingresa con tu cuenta de Google y llévate " + FPCT + "% de descuento en tu primera compra."; }
+  if(ELIG && FPCT && count() > 0){ bn.hidden = false; bn.textContent = "🎉 Tienes " + FPCT + "% de descuento en tu primera compra. Ya está aplicado."; }
   else bn.hidden = true;
   $("t-total").textContent = sh === null ? money(sub - dsc) + " + envío" : money(sub - dsc + sh);
   $("f-delivery").hidden = mode() !== "delivery";
@@ -786,7 +789,7 @@ document.addEventListener("click", function(e){
       updateLink();
       postOrder(orderCode, subtotal() - discount() + (shp || 0));
       track("send_order",{currency:"BOB",value:subtotal() - discount() + (shp || 0),shipping:shp || 0,delivery_mode:mode(),city:city(),zone:$("zone").value,items_count:count(),order_code:orderCode});
-      orderCode = null;
+      orderCode = null; if(discount() > 0) ELIG = false;
     }
   }
 });

@@ -4,6 +4,7 @@ import { hit } from "../lib/auth.mjs";
 import { MAX_QTY_PER_LINE, MAX_LINES, FIRST_PURCHASE_PCT } from "../lib/catalog.mjs";
 import { effective } from "../lib/content.mjs";
 import { currentCustomer } from "../lib/session.mjs";
+import { keysFor, eligible, consume } from "../lib/discount.mjs";
 
 const CODE = /^JH-[A-Z0-9]{6}$/;
 const ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -50,12 +51,13 @@ export default async (req) => {
     const qrOn = !!(content.payment && content.payment.qrImage);
     const pay = b.pay === "qr" && qrOn ? "qr" : "efectivo";
     let cust = null; try { cust = await currentCustomer(req); } catch { /* sin sesión */ }
-    // 10 % en la primera compra: solo con cuenta, sobre los productos (no el envío).
-    const discount = cust && !cust.usedFirstDiscount ? Math.round((subtotal * FIRST_PURCHASE_PCT) / 100) : 0;
-    if (discount > 0) { cust.usedFirstDiscount = true; await (await getDb("customers")).setJSON(cust.cid, cust); }
+    // 10 % en la primera compra (con o sin cuenta), sobre los productos y no el envío.
+    const dkeys = keysFor(cust, b.deviceId);
+    const discount = (await eligible(dkeys)) ? Math.round((subtotal * FIRST_PURCHASE_PCT) / 100) : 0;
+    if (discount > 0) await consume(dkeys, code);
     const order = {
       code, createdAt: new Date().toISOString(), status: "nuevo",
-      name, mode, city, zone, address, items, subtotal, discount, shipping, total: subtotal - discount + shipping,
+      name, mode, city, zone, address, items, subtotal, discount, discountKeys: discount > 0 ? dkeys : [], shipping, total: subtotal - discount + shipping,
       pay, paid: false, customerId: cust ? cust.cid : null, customerEmail: cust ? cust.email : null,
       clientTotal: Number.isFinite(Number(b.clientTotal)) ? Number(b.clientTotal) : null
     };

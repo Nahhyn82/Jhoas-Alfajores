@@ -30,4 +30,4 @@ export function sameOrigin(req) {
   if (!o) return true;
   try { return new URL(o).host === new URL(req.url).host; } catch { return false; }
 }
-export function publicCustomer(c) { return c && { name: c.name, email: c.email, birthday: c.birthday || "", marketing: !!c.marketing, firstPurchase: !c.usedFirstDiscount }; }
+export function publicCustomer(c) { return c && { name: c.name, email: c.email, birthday: c.birthday || "", marketing: !!c.marketing }; }
