@@ -1,0 +1,33 @@
+process.env.JHOAS_TEST_MEMORY = "1";
+process.env.ADMIN_PASSWORD = "clave-de-prueba-1";
+const { default: orders } = await import("../netlify/functions/orders.mjs");
+const { default: admin } = await import("../netlify/functions/admin.mjs");
+const { default: catalog } = await import("../netlify/functions/catalog.mjs");
+let fail = 0; const ok = (c, m) => { console.log((c ? "OK   " : "FALLA ") + m); if (!c) fail++; };
+const post = (url, body, h = {}, m = "POST") => new Request("http://x" + url, { method: m, headers: { "content-type": "application/json", "x-forwarded-for": "1.2.3.4", ...h }, body: m === "GET" ? undefined : JSON.stringify(body) });
+const A = { "x-admin-password": "clave-de-prueba-1" };
+
+let r = await orders(post("/api/orders", { code: "JH-ABC234", items: [{ key: "chocolate|p", qty: 2 }, { key: "caja-mix-10|c", qty: 1 }], mode: "delivery", city: "La Paz", zone: "Sopocachi", address: "Calle 1", name: "Ana <b>", clientTotal: 1 }));
+let j = await r.json();
+ok(r.status === 200 && j.code === "JH-ABC234", "pedido válido se guarda con su código");
+ok(j.total === 65 * 2 + 92 + 6, "el servidor recalcula el total (228), ignora el del navegador");
+r = await orders(post("/api/orders", { items: [{ key: "chocolate|u", qty: -1 }], mode: "pickup", name: "x" })); ok(r.status === 400, "cantidad negativa rechazada");
+r = await orders(post("/api/orders", { items: [{ key: "hack|u", qty: 1 }], mode: "pickup", name: "x" })); ok(r.status === 400, "producto inexistente rechazado");
+r = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 1 }], mode: "delivery", city: "La Paz", zone: "Marte", address: "a", name: "x" })); ok(r.status === 400, "zona falsa rechazada");
+r = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 3 }], mode: "pickup", name: "=cmd|' /C calc'!A0" })); ok(r.status === 200, "recojo sin dirección ok");
+r = await orders(new Request("http://x/api/orders")); ok(r.status === 405, "GET a /api/orders rechazado");
+
+r = await admin(post("/api/admin/orders", null, {}, "GET")); ok(r.status === 401, "admin sin contraseña = 401");
+r = await admin(post("/api/admin/orders", null, { "x-admin-password": "mala" }, "GET")); ok(r.status === 401, "contraseña mala = 401");
+r = await admin(post("/api/admin/orders", null, A, "GET")); j = await r.json(); ok(j.orders.length === 2, "admin lista 2 pedidos");
+ok(!j.orders.some((o) => o.name.includes("<")), "se limpian < > del nombre");
+r = await admin(post("/api/admin/orders", { code: "JH-ABC234", status: "entregado" }, A, "PATCH")); ok(r.status === 200, "cambiar estado");
+r = await admin(post("/api/admin/stats", null, A, "GET")); j = await r.json(); ok(j.orders === 2 && j.revenue === 228 + 21, "estadísticas: 2 pedidos, Bs 249");
+r = await admin(post("/api/admin/soldout", { ids: ["oreo", "falso"] }, A)); j = await r.json(); ok(j.ids.length === 1 && j.ids[0] === "oreo", "agotado solo acepta sabores reales");
+r = await catalog(); j = await r.json(); ok(j.soldOut[0] === "oreo", "el catálogo público refleja el agotado");
+r = await admin(post("/api/admin/export.csv", null, A, "GET")); const t = await r.text(); ok(t.includes("'=cmd"), "CSV neutraliza fórmulas");
+delete process.env.ADMIN_PASSWORD; r = await admin(post("/api/admin/orders", null, A, "GET")); ok(r.status === 503, "sin ADMIN_PASSWORD el panel queda cerrado");
+process.env.ADMIN_PASSWORD = "clave-de-prueba-1";
+let last; for (let i = 0; i < 12; i++) last = await orders(post("/api/orders", { items: [{ key: "oreo|u", qty: 1 }], mode: "pickup", name: "r" }, { "x-forwarded-for": "9.9.9.9" }));
+ok(last.status === 429, "límite de pedidos por IP (429)");
+console.log(fail ? fail + " FALLAS" : "TODO OK"); process.exit(fail ? 1 : 0);

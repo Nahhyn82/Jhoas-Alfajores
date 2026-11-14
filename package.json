@@ -1,0 +1,9 @@
+{
+  "name": "jhoas-alfajores",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Catálogo digital de Jhoa's Alfajores con backend en Netlify Functions + Netlify Blobs",
+  "scripts": { "test": "node test/run.mjs" },
+  "dependencies": { "@netlify/blobs": "^8.1.0" }
+}

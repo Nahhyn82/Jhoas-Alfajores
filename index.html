@@ -141,6 +141,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 .toast{position:fixed;left:16px;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:21;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#3b2a25;color:#fbf6f3;border-radius:16px;padding:8px 8px 8px 16px;box-shadow:0 12px 28px -10px rgba(60,35,25,.6);font-size:15px}
 .toast button{min-height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:700 14px var(--font-body);cursor:pointer;white-space:nowrap}
 @media(min-width:700px){.toast{left:auto;width:420px}}
+.btn:disabled{opacity:.55;cursor:not-allowed}
 .note{margin:0 0 20px;font-size:14px;color:var(--muted)}
 .iconbtn{background:transparent;border:1.5px solid var(--line);color:var(--fg);border-radius:999px;width:44px;height:44px;font-size:22px;line-height:1;cursor:pointer}
 .iconbtn:focus-visible,.panel input:focus-visible,.panel select:focus-visible,.panel button:focus-visible,.fab:focus-visible,.cartbtn:focus-visible,.card .btn:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
@@ -443,7 +444,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
     </div>
     <p class="err" id="err" role="alert" hidden></p>
     <a class="btn full" id="send" href="https://wa.me/59163223438" target="_blank" rel="noopener">Enviar pedido por WhatsApp</a>
-    <p class="hint">El pedido se abre en WhatsApp para que confirmemos contigo la disponibilidad y la hora de entrega. Todavía no se cobra nada en la página.</p>
+    <p class="hint">El pedido se abre en WhatsApp para que confirmemos contigo la disponibilidad y la hora de entrega. Todavía no se cobra nada en la página. Guardamos tu nombre, zona, dirección y productos solo para atender tu pedido.</p>
   </aside>
 </div>
 
@@ -475,6 +476,24 @@ var KEY = "jhoas-cart-v1";
 function load(){ try{ var r = localStorage.getItem(KEY); if(r) cart = JSON.parse(r) || {}; }catch(e){ cart = {}; } }
 function save(){ try{ localStorage.setItem(KEY, JSON.stringify(cart)); }catch(e){} }
 function money(n){ return "Bs " + n; }
+/* ---- Backend (Netlify Functions). Si falla, la página sigue funcionando por WhatsApp. ---- */
+var orderCode = null;
+function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s = "JH-", b = new Uint8Array(6); (window.crypto || window.msCrypto).getRandomValues(b); for(var i = 0; i < 6; i++) s += A[b[i] % A.length]; return s; }
+function applyCatalog(c){
+  var out = (c && c.soldOut) || [];
+  document.querySelectorAll("[data-add]").forEach(function(btn){
+    var id = btn.getAttribute("data-add").split("|")[0];
+    if(out.indexOf(id) > -1){ btn.disabled = true; btn.textContent = "Agotado"; }
+  });
+}
+function loadCatalog(){ try{ fetch("/api/catalog").then(function(r){ return r.ok ? r.json() : null; }).then(applyCatalog).catch(function(){}); }catch(e){} }
+function postOrder(code, total){
+  var items = Object.keys(cart).map(function(k){ return { key: k, qty: cart[k].qty }; });
+  try{
+    fetch("/api/orders", { method: "POST", keepalive: true, headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code: code, items: items, mode: mode(), city: city(), zone: $("zone").value, address: $("addr").value.trim(), name: $("cname").value.trim(), clientTotal: total }) }).catch(function(){});
+  }catch(e){}
+}
 function $(id){ return document.getElementById(id); }
 
 var overlay = $("overlay"), linesEl = $("lines"), lastFocus = null;
@@ -546,7 +565,7 @@ function problems(){
 }
 
 function message(){
-  var L = ["Hola, quiero hacer este pedido en Jhoa's Alfajores:", ""];
+  var L = ["Hola, quiero hacer este pedido en Jhoa's Alfajores:" + (orderCode ? " (Pedido " + orderCode + ")" : ""), ""];
   Object.keys(cart).forEach(function(k){
     var it = cart[k];
     L.push("• " + it.qty + " × " + it.name + " (" + it.label + ") — " + money(it.price * it.qty));
@@ -598,13 +617,18 @@ document.addEventListener("click", function(e){
     else {
       $("err").hidden = true;
       var shp = shipping();
-      track("send_order",{currency:"BOB",value:subtotal() + (shp || 0),shipping:shp || 0,delivery_mode:mode(),city:city(),zone:$("zone").value,items_count:count()});
+      if(!orderCode) orderCode = newCode();
+      updateLink();
+      postOrder(orderCode, subtotal() + (shp || 0));
+      track("send_order",{currency:"BOB",value:subtotal() + (shp || 0),shipping:shp || 0,delivery_mode:mode(),city:city(),zone:$("zone").value,items_count:count(),order_code:orderCode});
+      orderCode = null;
     }
   }
 });
 overlay.addEventListener("click", function(e){ if(e.target === overlay) closeCart(); });
 document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !overlay.hidden) closeCart(); });
 fillZones();
+loadCatalog();
 ["zone","addr","cname"].forEach(function(id){ $(id).addEventListener("input", render); $(id).addEventListener("change", render); });
 document.querySelectorAll('input[name="mode"]').forEach(function(r){ r.addEventListener("change", render); });
 

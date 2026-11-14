@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Panel · Jhoa's Alfajores</title>
+<style>
+body{font:16px/1.4 system-ui,sans-serif;margin:0;background:#faf6f1;color:#3a2418}
+main{max-width:760px;margin:0 auto;padding:16px}
+h1{font-size:1.3rem;margin:.2em 0 .6em} h2{font-size:1.05rem;margin:1.4em 0 .5em}
+input,button,select{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid #cdb9a8;min-height:44px}
+button{background:#7a3b1d;color:#fff;border-color:#7a3b1d;cursor:pointer} button.ghost{background:#fff;color:#7a3b1d}
+.card{background:#fff;border:1px solid #e6d8c9;border-radius:14px;padding:12px;margin:10px 0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grow{flex:1}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi b{display:block;font-size:1.5rem}.tag{font-size:.8rem;padding:2px 8px;border-radius:99px;background:#eee}
+.tag.nuevo{background:#ffe3a3}.tag.confirmado{background:#cfe8ff}.tag.entregado{background:#cdeccd}.tag.cancelado{background:#f3c9c9}
+label.chk{display:inline-flex;gap:6px;align-items:center;margin:4px 10px 4px 0}.err{color:#a11}
+</style></head><body><main>
+<h1>Panel de pedidos · Jhoa's</h1>
+<div id="login" class="card"><p>Contraseña de administrador</p>
+<div class="row"><input id="pw" type="password" class="grow" autocomplete="current-password"><button id="go">Entrar</button></div><p class="err" id="lerr"></p></div>
+<div id="app" hidden>
+<div class="row"><button class="ghost" id="reload">Actualizar</button><button class="ghost" id="csv">Descargar CSV (Excel)</button><button class="ghost" id="out">Salir</button></div>
+<h2>Resumen</h2><div class="kpis" id="kpis"></div>
+<h2>Más vendidos (unidades pedidas)</h2><div class="card" id="flavors"></div>
+<h2>Sabores agotados</h2><div class="card" id="sold"></div><button id="savesold">Guardar agotados</button>
+<h2>Pedidos</h2><div id="orders"></div>
+</div>
+<script>
+var PW=sessionStorage.getItem("jh_pw")||"",$=function(i){return document.getElementById(i)};
+function esc(s){var d=document.createElement("div");d.textContent=s==null?"":s;return d.innerHTML}
+function api(p,o){o=o||{};o.headers=Object.assign({"x-admin-password":PW,"content-type":"application/json"},o.headers||{});return fetch("/api/admin/"+p,o)}
+var FLAVORS=["chocolate","naranja","moka","canela","chocolate-blanco","oreo","red-velvet","pink-velvet","arandanos","guayaba","caja-mix-10","caja-5-especiales","caja-panda-3"];
+async function login(){PW=$("pw").value||PW;var r=await api("login");
+ if(r.status===503){$("lerr").textContent="El panel aún no tiene contraseña: configura ADMIN_PASSWORD en Netlify.";return}
+ if(r.status===429){$("lerr").textContent="Demasiados intentos, espera unos minutos.";return}
+ if(!r.ok){$("lerr").textContent="Contraseña incorrecta.";return}
+ sessionStorage.setItem("jh_pw",PW);$("login").hidden=true;$("app").hidden=false;load()}
+async function load(){
+ var st=await (await api("stats")).json();
+ $("kpis").innerHTML='<div class="card kpi"><b>'+st.orders+'</b>pedidos (sin cancelados)</div><div class="card kpi"><b>Bs '+st.revenue+'</b>vendido</div>';
+ var f=Object.entries(st.byFlavor).sort(function(a,b){return b[1]-a[1]});
+ $("flavors").innerHTML=f.length?f.map(function(x){return esc(x[0])+": <b>"+x[1]+"</b>"}).join("<br>"):"Aún no hay pedidos.";
+ var so=(await (await api("soldout")).json()).ids;
+ $("sold").innerHTML=FLAVORS.map(function(id){return '<label class="chk"><input type="checkbox" value="'+id+'"'+(so.indexOf(id)>-1?" checked":"")+'> '+id+'</label>'}).join("");
+ var os=(await (await api("orders")).json()).orders;
+ $("orders").innerHTML=os.length?os.map(function(o){
+  return '<div class="card"><div class="row"><b class="grow">'+esc(o.code)+' · '+esc(o.name)+'</b><span class="tag '+o.status+'">'+o.status+'</span></div>'+
+  '<div>'+esc(new Date(o.createdAt).toLocaleString("es-BO"))+'</div>'+
+  '<div>'+o.items.map(function(i){return i.qty+"× "+esc(i.name)+" ("+esc(i.label)+")"}).join(", ")+'</div>'+
+  '<div>'+(o.mode==="pickup"?"Recojo":esc(o.zone+", "+o.city+" — "+o.address))+'</div>'+
+  '<div><b>Total Bs '+o.total+'</b> (envío Bs '+o.shipping+')</div>'+
+  '<div class="row"><select data-code="'+esc(o.code)+'">'+["nuevo","confirmado","entregado","cancelado"].map(function(s){return '<option'+(s===o.status?" selected":"")+'>'+s+'</option>'}).join("")+'</select></div></div>'}).join(""):'<div class="card">Aún no hay pedidos.</div>'}
+$("go").onclick=login;$("pw").onkeydown=function(e){if(e.key==="Enter")login()};
+$("reload").onclick=load;$("out").onclick=function(){sessionStorage.removeItem("jh_pw");location.reload()};
+$("orders").onchange=async function(e){var s=e.target;if(!s.dataset.code)return;await api("orders",{method:"PATCH",body:JSON.stringify({code:s.dataset.code,status:s.value})});load()};
+$("savesold").onclick=async function(){var ids=[].map.call(document.querySelectorAll("#sold input:checked"),function(i){return i.value});await api("soldout",{method:"POST",body:JSON.stringify({ids:ids})});alert("Guardado")};
+$("csv").onclick=async function(){var r=await api("export.csv");var b=await r.blob();var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="pedidos-jhoas.csv";a.click()};
+if(PW)login();
+</script></main></body></html>
