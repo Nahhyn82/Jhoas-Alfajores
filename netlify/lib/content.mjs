@@ -22,7 +22,14 @@ const noTags = (s) => s.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f<>
 // Valida y limpia lo que envía el panel. Devuelve el objeto limpio o lanza Error con mensaje.
 export function validateContent(b) {
   if (!b || typeof b !== "object") throw new Error("contenido_invalido");
-  const out = { texts: {}, images: {}, alts: {}, prices: {}, names: {}, descs: {}, zones: {}, phone: "", links: [] };
+  const out = { texts: {}, images: {}, alts: {}, prices: {}, names: {}, descs: {}, zones: {}, phone: "", links: [], payment: { qrImage: "", note: "" } };
+  if (b.payment) {
+    const q = String(b.payment.qrImage || "");
+    if (q && !/^u-[a-f0-9]{16}$/.test(q)) throw new Error("qr_invalido");
+    const note = noTags(String(b.payment.note || "")).trim();
+    if (note.length > 300) throw new Error("nota_qr_invalida");
+    out.payment = { qrImage: q, note };
+  }
   if (b.links != null) {
     if (!Array.isArray(b.links) || b.links.length > 12) throw new Error("enlaces_invalidos");
     for (const l of b.links) {

@@ -147,6 +147,13 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 .toast button{min-height:44px;padding:0 18px;border:0;border-radius:999px;background:var(--accent);color:var(--accent-ink);font:700 14px var(--font-body);cursor:pointer;white-space:nowrap}
 @media(min-width:700px){.toast{left:auto;width:420px}}
 .btn:disabled{opacity:.55;cursor:not-allowed}
+.hbtns{display:flex;gap:8px;align-items:center}
+.panel input[type=checkbox]{width:22px;height:22px;flex:none;accent-color:var(--accent)}
+.panel label.chk{display:flex;align-items:flex-start;gap:10px;font-weight:400;font-size:14px}
+.bday{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+#qrbox{display:grid;gap:8px;justify-items:center;text-align:center}
+#qrbox img{width:min(240px,100%);height:auto;border-radius:12px;background:#fff;padding:8px}
+.linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;min-height:44px;padding:0}
 .note{margin:0 0 20px;font-size:14px;color:var(--muted)}
 .iconbtn{background:transparent;border:1.5px solid var(--line);color:var(--fg);border-radius:999px;width:44px;height:44px;font-size:22px;line-height:1;cursor:pointer}
 .iconbtn:focus-visible,.panel input:focus-visible,.panel select:focus-visible,.panel button:focus-visible,.fab:focus-visible,.cartbtn:focus-visible,.card .btn:focus-visible{outline:3px solid var(--rose);outline-offset:2px}
@@ -191,7 +198,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
       <a href="#presentacion">Nosotros</a>
       <a href="#contacto">Contacto</a>
     </nav>
-    <button class="btn cartbtn" type="button" data-open-cart>Carrito <span class="count" data-count>0</span></button>
+    <div class="hbtns"><button class="btn small ghost" type="button" id="acct-btn" hidden>Ingresar</button><button class="btn cartbtn" type="button" data-open-cart>Carrito <span class="count" data-count>0</span></button></div>
   </div>
 </header>
 
@@ -412,6 +419,31 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-msg"></span><button type="button" data-open-cart>Ver carrito</button></div>
 <button class="btn fab" type="button" data-open-cart aria-label="Abrir carrito">Carrito <span class="count" data-count>0</span></button>
 
+<div class="overlay" id="acct-overlay" hidden>
+  <aside class="panel" role="dialog" aria-modal="true" aria-labelledby="acct-title">
+    <header><h2 id="acct-title">Mi cuenta</h2><button class="iconbtn" type="button" id="acct-close" aria-label="Cerrar">×</button></header>
+    <div id="acct-out">
+      <p>Ingresa con tu cuenta de Google para guardar tus datos y recibir promociones y un saludo en tu cumpleaños.</p>
+      <div id="g-btn"></div>
+      <p class="hint" id="acct-msg-out"></p>
+    </div>
+    <div id="acct-in" hidden>
+      <p class="hint">Sesión iniciada como <b id="acct-email"></b></p>
+      <fieldset>
+        <label for="acct-name">Nombre<input id="acct-name" type="text" autocomplete="name"></label>
+        <div><span style="font-size:14px;font-weight:700">Cumpleaños (opcional)</span>
+          <div class="bday"><select id="acct-day" aria-label="Día"><option value="">Día</option></select><select id="acct-month" aria-label="Mes"><option value="">Mes</option></select></div></div>
+        <label class="chk" for="acct-mkt"><input id="acct-mkt" type="checkbox"> Quiero recibir promociones y un saludo en mi cumpleaños por correo. Puedo darme de baja cuando quiera.</label>
+      </fieldset>
+      <p class="err" id="acct-err" role="alert" hidden></p>
+      <button class="btn full" type="button" id="acct-save">Guardar</button>
+      <p class="hint" id="acct-msg"></p>
+      <div><button class="linkbtn" type="button" id="acct-logout">Cerrar sesión</button> · <button class="linkbtn" type="button" id="acct-del">Borrar mi cuenta y mis datos</button></div>
+    </div>
+    <p class="hint">Usamos tu correo, nombre y cumpleaños solo para tus pedidos y, si marcas la casilla, para enviarte promociones. No los compartimos.</p>
+  </aside>
+</div>
+
 <div class="overlay" id="overlay" hidden>
   <aside class="panel" role="dialog" aria-modal="true" aria-labelledby="cart-title" id="panel">
     <header>
@@ -447,6 +479,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
       <label for="cname">Nombre
         <input id="cname" type="text" autocomplete="name" placeholder="Tu nombre">
       </label>
+    </fieldset>
+
+    <fieldset id="f-pay" hidden>
+      <legend>Cómo pagas</legend>
+      <div class="seg"><label><input type="radio" name="pay" value="efectivo" checked> Efectivo</label><label><input type="radio" name="pay" value="qr"> QR</label></div>
+      <div id="qrbox" hidden><img id="qrimg" alt="Código QR para pagar" width="240" height="240"><p class="hint" id="qrnote"></p><p class="hint">Paga el total con este QR y envíanos el comprobante por WhatsApp. Confirmamos tu pedido al verlo.</p></div>
     </fieldset>
 
     <div class="totals">
@@ -542,6 +580,11 @@ function applyContent(c){
     });
     $("comunidad").hidden = ls.length === 0;
   }
+  var qr = c.payment && c.payment.qrImage;
+  $("f-pay").hidden = !qr;
+  if(qr){ $("qrimg").src = "/api/img/" + qr; $("qrnote").textContent = c.payment.note || ""; }
+  else { var ef = document.querySelector('input[name="pay"][value="efectivo"]'); if(ef) ef.checked = true; }
+  syncQr();
   if(c.phone){
     WA_NUMBER = c.phone;
     document.querySelectorAll('a[href*="wa.me/"]').forEach(function(a){
@@ -553,10 +596,45 @@ function applyContent(c){
   save(); render();
 }
 /* ---- Backend (Netlify Functions). Si falla, la página sigue funcionando por WhatsApp. ---- */
-var orderCode = null;
+var orderCode = null, GCID = "", me = null;
+function syncQr(){ $("qrbox").hidden = !($("f-pay").hidden === false && payMethod() === "qr"); }
+function api(url, method, body){
+  return fetch(url, { method: method || "GET", credentials: "same-origin", headers: body ? { "content-type": "application/json" } : {}, body: body ? JSON.stringify(body) : undefined }).then(function(r){ return r.json().then(function(j){ return { ok: r.ok, status: r.status, j: j }; }); });
+}
+function fillBirthday(){
+  var d = $("acct-day"), m = $("acct-month"), N = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  if(d.options.length > 1) return;
+  for(var i = 1; i <= 31; i++){ var o = document.createElement("option"); o.value = ("0" + i).slice(-2); o.textContent = i; d.appendChild(o); }
+  N.forEach(function(n, i){ var o = document.createElement("option"); o.value = ("0" + (i + 1)).slice(-2); o.textContent = n; m.appendChild(o); });
+}
+function showMe(c){
+  me = c; $("acct-out").hidden = !!c; $("acct-in").hidden = !c;
+  $("acct-btn").textContent = c ? (c.name || "Mi cuenta").split(" ")[0] : "Ingresar";
+  if(!c) return;
+  fillBirthday(); $("acct-email").textContent = c.email; $("acct-name").value = c.name || "";
+  var b = (c.birthday || "").split("-"); $("acct-month").value = b[0] || ""; $("acct-day").value = b[1] || ""; $("acct-mkt").checked = !!c.marketing;
+  if(!$("cname").value.trim() && c.name) { $("cname").value = c.name; render(); }
+}
+function loadMe(){ api("/api/me").then(function(r){ if(r.ok) showMe(r.j.customer); }).catch(function(){}); }
+function renderGoogle(){
+  if(!GCID || !window.google || !google.accounts) return;
+  google.accounts.id.initialize({ client_id: GCID, callback: function(resp){
+    api("/api/auth/google", "POST", { credential: resp.credential }).then(function(r){
+      if(r.ok){ track("login", { method: "google" }); showMe(r.j.customer); } else $("acct-msg-out").textContent = "No pudimos ingresar. Intenta de nuevo.";
+    });
+  } });
+  google.accounts.id.renderButton($("g-btn"), { theme: "outline", size: "large", text: "continue_with", locale: "es", width: 280 });
+}
+function openAcct(){
+  $("acct-overlay").hidden = false; document.body.style.overflow = "hidden";
+  if(!me && !window.google){ var sc = document.createElement("script"); sc.src = "https://accounts.google.com/gsi/client"; sc.async = true; sc.onload = renderGoogle; document.head.appendChild(sc); }
+  else if(!me) renderGoogle();
+}
+function closeAcct(){ $("acct-overlay").hidden = true; document.body.style.overflow = ""; }
 function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s = "JH-", b = new Uint8Array(6); (window.crypto || window.msCrypto).getRandomValues(b); for(var i = 0; i < 6; i++) s += A[b[i] % A.length]; return s; }
 function applyCatalog(c){
   applyContent(c && c.content);
+  if(c && c.googleClientId){ GCID = c.googleClientId; $("acct-btn").hidden = false; loadMe(); }
   var out = (c && c.soldOut) || [];
   document.querySelectorAll("[data-add]").forEach(function(btn){
     var id = btn.getAttribute("data-add").split("|")[0];
@@ -564,11 +642,12 @@ function applyCatalog(c){
   });
 }
 function loadCatalog(){ try{ fetch("/api/catalog").then(function(r){ return r.ok ? r.json() : null; }).then(applyCatalog).catch(function(){}); }catch(e){} }
+function payMethod(){ var r = document.querySelector('input[name="pay"]:checked'); return r && !$("f-pay").hidden ? r.value : "efectivo"; }
 function postOrder(code, total){
   var items = Object.keys(cart).map(function(k){ return { key: k, qty: cart[k].qty }; });
   try{
     fetch("/api/orders", { method: "POST", keepalive: true, headers: { "content-type": "application/json" },
-      body: JSON.stringify({ code: code, items: items, mode: mode(), city: city(), zone: $("zone").value, address: $("addr").value.trim(), name: $("cname").value.trim(), clientTotal: total }) }).catch(function(){});
+      body: JSON.stringify({ code: code, items: items, mode: mode(), pay: payMethod(), city: city(), zone: $("zone").value, address: $("addr").value.trim(), name: $("cname").value.trim(), clientTotal: total }) }).catch(function(){});
   }catch(e){}
 }
 function $(id){ return document.getElementById(id); }
@@ -657,6 +736,7 @@ function message(){
   } else {
     L.push("Recojo: sin costo de envío", "Total: " + money(sub), "", "Nombre: " + $("cname").value.trim(), "Quiero coordinar el recojo.");
   }
+  L.push("Pago: " + (payMethod() === "qr" ? "QR (te envío el comprobante)" : "efectivo"));
   return L.join("\n");
 }
 function updateLink(){ $("send").href = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(message()); }
@@ -703,7 +783,21 @@ document.addEventListener("click", function(e){
   }
 });
 overlay.addEventListener("click", function(e){ if(e.target === overlay) closeCart(); });
-document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !overlay.hidden) closeCart(); });
+$("acct-btn").addEventListener("click", openAcct);
+$("acct-close").addEventListener("click", closeAcct);
+$("acct-overlay").addEventListener("click", function(e){ if(e.target === $("acct-overlay")) closeAcct(); });
+document.querySelectorAll('input[name="pay"]').forEach(function(r){ r.addEventListener("change", function(){ syncQr(); render(); }); });
+$("acct-save").addEventListener("click", function(){
+  var d = $("acct-day").value, m = $("acct-month").value, err = $("acct-err"); err.hidden = true;
+  if((d && !m) || (m && !d)){ err.textContent = "Elige día y mes del cumpleaños, o deja ambos vacíos."; err.hidden = false; return; }
+  api("/api/me", "PUT", { name: $("acct-name").value, birthday: d && m ? m + "-" + d : "", marketing: $("acct-mkt").checked }).then(function(r){
+    if(r.ok){ showMe(r.j.customer); $("acct-msg").textContent = "Guardado ✓"; track("account_saved", { marketing: !!r.j.customer.marketing }); }
+    else { err.textContent = r.j.error === "cumple_invalido" ? "Esa fecha no existe." : "No se pudo guardar."; err.hidden = false; }
+  });
+});
+$("acct-logout").addEventListener("click", function(){ api("/api/auth/logout", "POST", {}).then(function(){ showMe(null); closeAcct(); }); });
+$("acct-del").addEventListener("click", function(){ if(confirm("¿Borrar tu cuenta y tus datos? No se puede deshacer.")) api("/api/me", "DELETE").then(function(){ showMe(null); closeAcct(); }); });
+document.addEventListener("keydown", function(e){ if(e.key === "Escape"){ if(!$("acct-overlay").hidden) closeAcct(); else if(!overlay.hidden) closeCart(); } });
 fillZones();
 loadCatalog();
 ["zone","addr","cname"].forEach(function(id){ $(id).addEventListener("input", render); $(id).addEventListener("change", render); });

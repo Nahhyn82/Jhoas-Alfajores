@@ -3,6 +3,7 @@ import { getDb } from "../lib/store.mjs";
 import { hit } from "../lib/auth.mjs";
 import { MAX_QTY_PER_LINE, MAX_LINES } from "../lib/catalog.mjs";
 import { effective } from "../lib/content.mjs";
+import { currentCustomer } from "../lib/session.mjs";
 
 const CODE = /^JH-[A-Z0-9]{6}$/;
 const ABC = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -17,7 +18,7 @@ export default async (req) => {
     if (!(await hit(req, "orders", 10, 600))) return json({ error: "demasiados_pedidos" }, 429);
     const b = await readJson(req);
 
-    const { products: PRODUCTS, zones: ZONES } = await effective();
+    const { products: PRODUCTS, zones: ZONES, content } = await effective();
     const lines = Array.isArray(b.items) ? b.items.slice(0, MAX_LINES) : [];
     const items = [];
     let subtotal = 0;
@@ -46,16 +47,20 @@ export default async (req) => {
     let code = CODE.test(String(b.code || "")) ? b.code : newCode();
     for (let i = 0; i < 5 && (await db.get(code)); i++) code = newCode();
 
+    const qrOn = !!(content.payment && content.payment.qrImage);
+    const pay = b.pay === "qr" && qrOn ? "qr" : "efectivo";
+    let cust = null; try { cust = await currentCustomer(req); } catch { /* sin sesión */ }
     const order = {
       code, createdAt: new Date().toISOString(), status: "nuevo",
       name, mode, city, zone, address, items, subtotal, shipping, total: subtotal + shipping,
+      pay, paid: false, customerId: cust ? cust.cid : null, customerEmail: cust ? cust.email : null,
       clientTotal: Number.isFinite(Number(b.clientTotal)) ? Number(b.clientTotal) : null
     };
     await db.setJSON(code, order);
 
     const hook = process.env.NOTIFY_WEBHOOK_URL;
     if (hook) {
-      const text = `🧁 Pedido ${code}: ${name} · ${items.map((i) => i.qty + "× " + i.name + " (" + i.label + ")").join(", ")} · Total Bs ${order.total} · ${mode === "pickup" ? "Recojo" : zone + ", " + city}`;
+      const text = `🧁 Pedido ${code}: ${name} · ${items.map((i) => i.qty + "× " + i.name + " (" + i.label + ")").join(", ")} · Total Bs ${order.total} · ${pay === "qr" ? "QR" : "Efectivo"} · ${mode === "pickup" ? "Recojo" : zone + ", " + city}`;
       try { await fetch(hook, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ text, content: text }), signal: AbortSignal.timeout(4000) }); } catch { /* el aviso es opcional */ }
     }
     return json({ ok: true, code, total: order.total });

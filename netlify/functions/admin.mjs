@@ -1,9 +1,10 @@
 import { json, readJson, clean } from "../lib/http.mjs";
 import { getDb } from "../lib/store.mjs";
-import { passwordOk, adminConfigured, hit } from "../lib/auth.mjs";
+import { passwordOk, adminConfigured, failedCount, recordFail } from "../lib/auth.mjs";
 import { PRODUCTS } from "../lib/catalog.mjs";
 import { validateContent } from "../lib/content.mjs";
 import { createHash } from "node:crypto";
+import { handle as extra, syncOrderPayment } from "../lib/admin_extra.mjs";
 
 const STATUSES = ["nuevo", "confirmado", "entregado", "cancelado"];
 
@@ -19,8 +20,8 @@ const csvCell = (v) => { let s = String(v ?? ""); if (/^[=+\-@\t\r]/.test(s)) s 
 
 export default async (req) => {
   if (!adminConfigured()) return json({ error: "admin_no_configurado" }, 503);
-  if (!(await hit(req, "admin", 30, 600))) return json({ error: "demasiados_intentos" }, 429);
-  if (!passwordOk(req.headers.get("x-admin-password"))) return json({ error: "no_autorizado" }, 401);
+  if ((await failedCount(req)) >= 15) return json({ error: "demasiados_intentos" }, 429);
+  if (!passwordOk(req.headers.get("x-admin-password"))) { await recordFail(req); return json({ error: "no_autorizado" }, 401); }
 
   const path = new URL(req.url).pathname.replace(/\/+$/, "");
   try {
@@ -30,12 +31,16 @@ export default async (req) => {
 
     if (path.endsWith("/orders") && req.method === "PATCH") {
       const b = await readJson(req);
-      if (!STATUSES.includes(b.status)) return json({ error: "estado_invalido" }, 400);
+      if (b.status != null && !STATUSES.includes(b.status)) return json({ error: "estado_invalido" }, 400);
       const db = await getDb("orders");
       const o = await db.get(clean(b.code, 12));
       if (!o) return json({ error: "no_existe" }, 404);
-      o.status = b.status; o.updatedAt = new Date().toISOString();
+      if (b.status != null) o.status = b.status;
+      const payChanged = typeof b.paid === "boolean" && b.paid !== !!o.paid;
+      if (typeof b.paid === "boolean") { o.paid = b.paid; o.paidAt = b.paid ? new Date().toISOString() : null; }
+      o.updatedAt = new Date().toISOString();
       await db.setJSON(o.code, o);
+      if (payChanged) await syncOrderPayment(o);
       return json({ ok: true, order: o });
     }
 
@@ -86,6 +91,8 @@ export default async (req) => {
         headers: { "content-type": "text/csv; charset=utf-8", "content-disposition": 'attachment; filename="pedidos-jhoas.csv"', "cache-control": "no-store" }
       });
     }
+    const x = await extra(req, path);
+    if (x) return x;
     return json({ error: "no_encontrado" }, 404);
   } catch (e) {
     return json({ error: e.status ? e.message : "error" }, e.status || 500);

@@ -11,6 +11,14 @@ export function passwordOk(given) {
 export function adminConfigured() {
   return !!process.env.ADMIN_PASSWORD && process.env.ADMIN_PASSWORD.length >= 8;
 }
+function slotKey(req, bucket, windowSec) {
+  const ip = req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "local";
+  const id = createHash("sha256").update((process.env.RATE_SALT || "jhoas") + ip).digest("hex").slice(0, 24);
+  return `${bucket}-${id}-${Math.floor(Date.now() / (windowSec * 1000))}`;
+}
+// Cuenta solo los intentos FALLIDOS de contraseña; con 15 fallos en 10 min se bloquea esa persona.
+export async function failedCount(req) { const c = await (await getDb("ratelimit")).get(slotKey(req, "adminfail", 600)); return c ? c.n : 0; }
+export async function recordFail(req) { const db = await getDb("ratelimit"), k = slotKey(req, "adminfail", 600); const c = (await db.get(k)) || { n: 0 }; c.n++; await db.setJSON(k, c); }
 // Limita intentos: guarda un contador por hash de IP (nunca la IP real) por ventana de tiempo.
 export async function hit(req, bucket, limit, windowSec) {
   const ip = req.headers.get("x-nf-client-connection-ip") || (req.headers.get("x-forwarded-for") || "").split(",")[0].trim() || "local";
