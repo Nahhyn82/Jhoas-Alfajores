@@ -24,7 +24,7 @@ label.chk{display:inline-flex;gap:6px;align-items:center;margin:4px 10px 4px 0}.
 <h2>Resumen</h2><div class="kpis" id="kpis"></div>
 <h2>Más vendidos (unidades pedidas)</h2><div class="card" id="flavors"></div>
 <h2>Sabores agotados</h2><div class="card" id="sold"></div><button id="savesold">Guardar agotados</button>
-<h2>Pedidos</h2><div id="orders"></div></div>
+<h2>Pedidos</h2><div class="row"><button id="payall">Marcar todos los pendientes como pagados</button></div><p class="small">Úsalo solo si ya cobraste todos los pedidos que figuran sin pagar. Los cancelados no se tocan.</p><div id="orders"></div></div>
 <div id="t-prod" class="tab" hidden><h2>Productos y precios</h2><p>Cambia nombre, descripción y precio. Deja el cuadro en su valor original si no quieres cambiar nada.</p><div id="prodlist"></div><button class="save">Guardar cambios</button></div>
 <div id="t-img" class="tab" hidden><h2>Fotos</h2><p>Toca "Cambiar foto" y elige una imagen. Se achica sola para que la página siga rápida.</p><div id="imglist"></div><button class="save">Guardar cambios</button></div>
 <div id="t-txt" class="tab" hidden><h2>Textos de la página</h2><p>En el título principal, rodea con *asteriscos* la palabra que va resaltada.</p><div id="txtlist"></div><button class="save">Guardar cambios</button></div>
@@ -67,6 +67,7 @@ async function load(){
   '<div class="row"><select data-code="'+esc(o.code)+'">'+["nuevo","confirmado","entregado","cancelado"].map(function(s){return '<option'+(s===o.status?" selected":"")+'>'+s+'</option>'}).join("")+'</select></div></div>'}).join(""):'<div class="card">Aún no hay pedidos.</div>'}
 $("go").onclick=login;$("pw").onkeydown=function(e){if(e.key==="Enter")login()};
 $("reload").onclick=load;$("out").onclick=function(){sessionStorage.removeItem("jh_pw");location.reload()};
+$("payall").onclick=async function(){var os=(await (await api("orders")).json()).orders.filter(function(o){return !o.paid&&o.status!=="cancelado"});if(!os.length){alert("No hay pedidos pendientes de pago.");return}if(!confirm("Vas a marcar "+os.length+" pedidos como pagados. ¿Ya los cobraste todos?"))return;for(var i=0;i<os.length;i++){await api("orders",{method:"PATCH",body:JSON.stringify({code:os[i].code,paid:true})})}load()};
 $("orders").onchange=async function(e){var s=e.target;if(s.dataset.paid){await api("orders",{method:"PATCH",body:JSON.stringify({code:s.dataset.paid,paid:s.checked})});load();return}if(!s.dataset.code)return;await api("orders",{method:"PATCH",body:JSON.stringify({code:s.dataset.code,status:s.value})});load()};
 $("savesold").onclick=async function(){var ids=[].map.call(document.querySelectorAll("#sold input:checked"),function(i){return i.value});await api("soldout",{method:"POST",body:JSON.stringify({ids:ids})});alert("Guardado")};
 $("csv").onclick=async function(){var r=await api("export.csv");var b=await r.blob();var a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="pedidos-jhoas.csv";a.click()};
