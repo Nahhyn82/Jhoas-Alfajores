@@ -150,6 +150,12 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
 .bday{display:grid;grid-template-columns:1fr 2fr;gap:8px}
 #qrbox{display:grid;gap:8px;justify-items:center;text-align:center}
 #qrbox img{width:min(240px,100%);height:auto;border-radius:12px;background:#fff;padding:8px}
+.bubble{position:fixed;z-index:30;width:min(270px,calc(100vw - 24px));background:var(--fg);color:var(--bg);border-radius:16px;padding:14px 38px 14px 14px;box-shadow:0 12px 28px -10px rgba(60,35,25,.6);font-size:14px;line-height:1.35}
+.bubble::before{content:"";position:absolute;top:-8px;left:var(--ax,40px);width:16px;height:16px;background:var(--fg);transform:rotate(45deg);border-radius:3px}
+.bubble b{display:block;font-size:15px;margin-bottom:4px}
+.bubble .bx{position:absolute;top:4px;right:4px;width:44px;height:44px;border:0;background:none;color:inherit;font-size:20px;cursor:pointer}
+.bubble .btn{margin-top:10px;min-height:40px;padding:0 16px;font-size:14px;background:var(--accent);color:var(--accent-ink)}
+@media (prefers-reduced-motion:no-preference){.bubble{animation:pop .35s ease-out}@keyframes pop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}}
 .linkbtn{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px;min-height:44px;padding:0}
 .note{margin:0 0 20px;font-size:14px;color:var(--muted)}
 .iconbtn{background:transparent;border:1.5px solid var(--line);color:var(--fg);border-radius:999px;width:44px;height:44px;font-size:22px;line-height:1;cursor:pointer}
@@ -413,6 +419,7 @@ footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 2
   <div class="wrap"><span data-ed="footer-text">Jhoa's · alfajores artesanales</span><span><a href="/privacidad.html">Privacidad</a> · <a href="https://www.instagram.com/jhoastreats/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.facebook.com/jhoastreats/?locale=es_LA" target="_blank" rel="noopener">Facebook</a></span></div>
 </footer>
 
+<div class="bubble" id="bubble" role="dialog" aria-label="Invitación a registrarte" hidden><button class="bx" type="button" id="bubble-x" aria-label="Cerrar">×</button><b>👋 ¡Regístrate con Google!</b>Recibe promociones y un saludo en tu cumpleaños 🎂<br><button class="btn" type="button" id="bubble-go">Ingresar con Google</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-msg"></span><button type="button" data-open-cart>Ver carrito</button></div>
 <button class="btn fab" type="button" data-open-cart aria-label="Abrir carrito">Carrito <span class="count" data-count>0</span></button>
 
@@ -609,7 +616,7 @@ function fillBirthday(){
   N.forEach(function(n, i){ var o = document.createElement("option"); o.value = ("0" + (i + 1)).slice(-2); o.textContent = n; m.appendChild(o); });
 }
 function showMe(c){
-  me = c; $("acct-out").hidden = !!c; $("acct-in").hidden = !c; render(); if(c) loadElig();
+  me = c; $("acct-out").hidden = !!c; $("acct-in").hidden = !c; render(); if(c){ loadElig(); hideBubble(false); }
   $("acct-btn").textContent = c ? (c.name || "Mi cuenta").split(" ")[0] : "Ingresar";
   if(!c) return;
   fillBirthday(); $("acct-email").textContent = c.email; $("acct-name").value = c.name || "";
@@ -631,6 +638,19 @@ function openAcct(){
   if(!me && !window.google){ var sc = document.createElement("script"); sc.src = "https://accounts.google.com/gsi/client"; sc.async = true; sc.onload = renderGoogle; document.head.appendChild(sc); }
   else if(!me) renderGoogle();
 }
+var BKEY = "jhoas-bubble-v1";
+function placeBubble(){
+  var b = $("bubble"), t = $("acct-btn"); if(b.hidden || t.hidden) return;
+  var r = t.getBoundingClientRect(), w = b.offsetWidth, left = Math.max(12, Math.min(innerWidth - w - 12, r.left + r.width / 2 - w / 2));
+  b.style.left = left + "px"; b.style.top = (r.bottom + 14) + "px"; b.style.setProperty("--ax", (r.left + r.width / 2 - left - 8) + "px");
+}
+function showBubble(){
+  if(me || !GCID || !$("overlay").hidden || !$("acct-overlay").hidden) return;
+  try{ var t = Number(localStorage.getItem(BKEY) || 0); if(Date.now() - t < 3 * 864e5) return; }catch(e){}
+  $("bubble").hidden = false; placeBubble();
+}
+function hideBubble(remember){ $("bubble").hidden = true; if(remember){ try{ localStorage.setItem(BKEY, String(Date.now())); }catch(e){} } }
+window.addEventListener("resize", placeBubble);
 function closeAcct(){ $("acct-overlay").hidden = true; document.body.style.overflow = ""; }
 function newCode(){ var A = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", s = "JH-", b = new Uint8Array(6); (window.crypto || window.msCrypto).getRandomValues(b); for(var i = 0; i < 6; i++) s += A[b[i] % A.length]; return s; }
 function applyCatalog(c){
@@ -698,7 +718,7 @@ function render(){
   $("t-disc-row").hidden = dsc <= 0;
   if(dsc > 0){ $("t-disc-label").textContent = "Descuento 1ª compra (" + FPCT + "%)"; $("t-disc").textContent = "−" + money(dsc); }
   var bn = $("disc-banner");
-  if(ELIG && FPCT && count() > 0){ bn.hidden = false; bn.textContent = "🎉 Tienes " + FPCT + "% de descuento en tu primera compra. Ya está aplicado."; }
+  if(ELIG && FPCT && count() > 0){ bn.hidden = false; bn.textContent = "🎉 Tienes " + FPCT + "% de descuento en tus productos (primera compra). El envío no tiene descuento."; }
   else bn.hidden = true;
   $("t-total").textContent = sh === null ? money(sub - dsc) + " + envío" : money(sub - dsc + sh);
   $("f-delivery").hidden = mode() !== "delivery";
@@ -753,7 +773,7 @@ function message(){
 function updateLink(){ $("send").href = "https://wa.me/" + WA_NUMBER + "?text=" + encodeURIComponent(message()); }
 
 var toastTimer; function showToast(m){ $("toast-msg").textContent = m; $("toast").hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(function(){ $("toast").hidden = true; }, 4500); }
-function openCart(){ $("toast").hidden = true; track("view_cart",{currency:"BOB",value:subtotal(),items_count:count()}); lastFocus = document.activeElement; overlay.hidden = false; document.body.style.overflow = "hidden"; render(); $("close-cart").focus(); }
+function openCart(){ $("toast").hidden = true; hideBubble(false); track("view_cart",{currency:"BOB",value:subtotal(),items_count:count()}); lastFocus = document.activeElement; overlay.hidden = false; document.body.style.overflow = "hidden"; render(); $("close-cart").focus(); }
 function closeCart(){ overlay.hidden = true; document.body.style.overflow = ""; if(lastFocus && lastFocus.focus) lastFocus.focus(); }
 
 document.addEventListener("click", function(e){
@@ -794,7 +814,10 @@ document.addEventListener("click", function(e){
   }
 });
 overlay.addEventListener("click", function(e){ if(e.target === overlay) closeCart(); });
-$("acct-btn").addEventListener("click", openAcct);
+$("acct-btn").addEventListener("click", function(){ hideBubble(true); openAcct(); });
+$("bubble-x").addEventListener("click", function(){ hideBubble(true); });
+$("bubble-go").addEventListener("click", function(){ hideBubble(true); openAcct(); });
+setTimeout(showBubble, 4000);
 $("acct-close").addEventListener("click", closeAcct);
 $("acct-overlay").addEventListener("click", function(e){ if(e.target === $("acct-overlay")) closeAcct(); });
 document.querySelectorAll('input[name="pay"]').forEach(function(r){ r.addEventListener("change", function(){ syncQr(); render(); }); });
