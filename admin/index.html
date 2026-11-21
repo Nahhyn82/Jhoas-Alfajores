@@ -28,7 +28,7 @@ label.chk{display:inline-flex;gap:6px;align-items:center;margin:4px 10px 4px 0}.
 <div id="t-prod" class="tab" hidden><h2>Productos y precios</h2><p>Cambia nombre, descripción y precio. Deja el cuadro en su valor original si no quieres cambiar nada.</p><div id="prodlist"></div><button class="save">Guardar cambios</button></div>
 <div id="t-img" class="tab" hidden><h2>Fotos</h2><p>Toca "Cambiar foto" y elige una imagen. Se achica sola para que la página siga rápida.</p><div id="imglist"></div><button class="save">Guardar cambios</button></div>
 <div id="t-txt" class="tab" hidden><h2>Textos de la página</h2><p>En el título principal, rodea con *asteriscos* la palabra que va resaltada.</p><div id="txtlist"></div><button class="save">Guardar cambios</button></div>
-<div id="t-env" class="tab" hidden><h2>Teléfono de WhatsApp</h2><p>Solo números con código de país, ej: 59163223438</p><input id="phone" inputmode="numeric"><h2>Tarifas de envío</h2><p>Una zona por línea, así: <code>Sopocachi = 6</code></p><div id="zonelist"></div><button class="save">Guardar cambios</button></div>
+<div id="t-env" class="tab" hidden><h2>Teléfono de WhatsApp</h2><p>Puedes escribirlo como +591 72523397; se guarda solo con números (59172523397)</p><input id="phone" inputmode="numeric"><h2>Tarifas de envío</h2><p>Una zona por línea, así: <code>Sopocachi = 6</code></p><div id="zonelist"></div><button class="save">Guardar cambios</button></div>
 <div id="t-lnk" class="tab" hidden><h2>Grupos y enlaces</h2><p>Agrega el grupo o canal de WhatsApp, WhatsApp Business, Instagram, TikTok, etc. Aparecen como botones en la sección "Únete a nuestra comunidad". Si no hay ninguno, la sección no se muestra.</p><div id="lnklist"></div><button class="ghost" id="addlnk">+ Agregar enlace</button> <button class="save">Guardar cambios</button></div>
 <div id="t-caja" class="tab" hidden><h2>Caja</h2><div id="cajabody"></div><button class="ghost" id="cajacsv">Descargar movimientos (CSV)</button></div>
 <div id="t-cli" class="tab" hidden><h2>Clientes</h2><div id="clibody"></div><button class="ghost" id="clicsv">Descargar clientes (CSV)</button>
@@ -90,7 +90,7 @@ function draw(){
  $("prodlist").innerHTML=DEF.cards.map(function(c){return '<div class="card"><b>'+esc(c.name)+'</b><label>Nombre<input data-n="'+c.flavor+'" value="'+esc(CONTENT.names[c.flavor]||c.name)+'"></label><label>Descripción<textarea data-d="'+c.flavor+'">'+esc(CONTENT.descs[c.flavor]!=null?CONTENT.descs[c.flavor]:c.desc)+'</textarea></label>'+c.btns.map(function(b){return '<label>Precio '+esc(b.label)+' (Bs)<input type="number" min="1" data-p="'+b.key+'" value="'+(CONTENT.prices[b.key]!=null?CONTENT.prices[b.key]:b.price)+'"></label>'}).join("")+'</div>'}).join("");
  $("imglist").innerHTML=DEF.imgs.map(function(i,n){var cur=CONTENT.images[i.src]?"/api/img/"+CONTENT.images[i.src]:"/"+i.src;return '<div class="card"><img src="'+esc(cur)+'" id="im'+n+'"><small>'+esc(i.src)+'</small><label>Descripción de la foto (para accesibilidad)<input data-a="'+esc(i.src)+'" value="'+esc(CONTENT.alts[i.src]!=null?CONTENT.alts[i.src]:i.alt)+'"></label><input type="file" accept="image/*" data-f="'+n+'"> '+(CONTENT.images[i.src]?'<button class="ghost" data-r="'+esc(i.src)+'">Volver a la original</button>':'')+'</div>'}).join("");
  $("txtlist").innerHTML=Object.keys(DEF.texts).map(function(k){var v=CONTENT.texts[k]!=null?CONTENT.texts[k]:DEF.texts[k];return '<label>'+esc(LABELS[k]||k)+(v.length>70?'<textarea data-t="'+k+'">'+esc(v)+'</textarea>':'<input data-t="'+k+'" value="'+esc(v)+'">')+'</label>'}).join("");
- $("phone").value=CONTENT.phone||"59163223438";
+ $("phone").value=CONTENT.phone||"59172523397";
  drawLinks();drawQr();
  var z=CONTENT.zones;if(!Object.keys(z).length)z=DEFZ;
  $("zonelist").innerHTML=Object.keys(z).map(function(c){return '<label>'+esc(c)+'<textarea data-z="'+esc(c)+'">'+Object.keys(z[c]).map(function(k){return k+" = "+z[c][k]}).join("\n")+'</textarea></label>'}).join("");
@@ -98,15 +98,16 @@ function draw(){
 var DEFZ={};
 function drawLinks(){$("lnklist").innerHTML=(CONTENT.links||[]).map(function(l,i){return '<div class="card"><label>Texto del botón<input data-ll="'+i+'" value="'+esc(l.label)+'" maxlength="40" placeholder="Grupo de WhatsApp"></label><label>Enlace (https://...)<input data-lu="'+i+'" value="'+esc(l.url)+'" placeholder="https://chat.whatsapp.com/..."></label><button class="ghost" data-del="'+i+'">Quitar</button></div>'}).join("")||"<p>Aún no hay enlaces.</p>"}
 function readLinks(){return [].map.call(document.querySelectorAll("[data-ll]"),function(e){return{label:e.value.trim(),url:document.querySelector('[data-lu="'+e.dataset.ll+'"]').value.trim()}}).filter(function(l){return l.label||l.url})}
+function normPhone(v){var d=String(v||"").replace(/\D/g,"");if(d.length===8)d="591"+d;return d}
 function collect(){
- var c={texts:{},images:Object.assign({},CONTENT.images),alts:{},prices:{},names:{},descs:{},zones:{},phone:$("phone").value.trim()};
+ var c={texts:{},images:Object.assign({},CONTENT.images),alts:{},prices:{},names:{},descs:{},zones:{},phone:normPhone($("phone").value)};
  document.querySelectorAll("[data-t]").forEach(function(e){if(e.value!==DEF.texts[e.dataset.t])c.texts[e.dataset.t]=e.value});
  DEF.cards.forEach(function(card){var n=document.querySelector('[data-n="'+card.flavor+'"]').value.trim(),d=document.querySelector('[data-d="'+card.flavor+'"]').value.trim();
   if(n&&n!==card.name)c.names[card.flavor]=n;if(d!==card.desc)c.descs[card.flavor]=d;
   card.btns.forEach(function(b){var v=parseInt(document.querySelector('[data-p="'+b.key+'"]').value,10);if(v&&v!==b.price)c.prices[b.key]=v})});
  DEF.imgs.forEach(function(i){var e=document.querySelector('[data-a="'+i.src.replace(/"/g,"")+'"]');if(e&&e.value!==i.alt)c.alts[i.src]=e.value});
  document.querySelectorAll("[data-z]").forEach(function(e){var o={};e.value.split("\n").forEach(function(l){var m=/^(.+?)\s*=\s*(\d+)\s*$/.exec(l.trim());if(m)o[m[1].trim()]=parseInt(m[2],10)});c.zones[e.dataset.z]=o});
- if(c.phone==="59163223438")c.phone="";
+ if(c.phone==="59172523397"||c.phone==="59163223438")c.phone="";
  c.payment={qrImage:(CONTENT.payment||{}).qrImage||"",note:$("qrnote").value.trim()};
  c.links=readLinks();
  return c}

@@ -59,6 +59,12 @@ export function validateContent(b) {
       out.zones[noTags(city).trim()][noTags(z).trim()] = fee;
     }
   }
-  if (b.phone) { if (!/^\d{8,15}$/.test(String(b.phone))) throw new Error("telefono_invalido"); out.phone = String(b.phone); }
+  if (b.phone) {
+    let ph = String(b.phone).replace(/\D/g, "");
+    if (/^\d{8}$/.test(ph)) ph = "591" + ph;
+    if (!/^\d{8,15}$/.test(ph)) throw new Error("telefono_invalido");
+    if (ph === "59163223438") ph = ""; // numero anterior: usar el predeterminado
+    out.phone = ph;
+  }
   return out;
 }
