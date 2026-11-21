@@ -26,6 +26,7 @@ r = await admin(post("/api/admin/orders", null, A, "GET")); j = await r.json(); 
 ok(!j.orders.some((o) => o.name.includes("<")), "se limpian < > del nombre");
 r = await admin(post("/api/admin/orders", { code: "JH-ABC234", status: "entregado" }, A, "PATCH")); ok(r.status === 200, "cambiar estado");
 r = await admin(post("/api/admin/stats", null, A, "GET")); j = await r.json(); ok(j.orders === 2 && j.revenue === 248 + 24, "estadísticas: 2 pedidos, Bs 252");
+ok(j.sales === 0 && j.sold === 0 && j.pending === j.revenue, "estadísticas: sin pagos no hay ventas, todo por cobrar");
 r = await admin(post("/api/admin/soldout", { ids: ["oreo", "falso"] }, A)); j = await r.json(); ok(j.ids.length === 1 && j.ids[0] === "oreo", "agotado solo acepta sabores reales");
 r = await catalog(); j = await r.json(); ok(j.soldOut[0] === "oreo", "el catálogo público refleja el agotado");
 r = await admin(post("/api/admin/export.csv", null, A, "GET")); const t = await r.text(); ok(t.includes("'=cmd"), "CSV neutraliza fórmulas");

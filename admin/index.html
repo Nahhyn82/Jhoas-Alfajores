@@ -51,7 +51,7 @@ async function login(){PW=$("pw").value||PW;var r=await api("login");
  sessionStorage.setItem("jh_pw",PW);$("login").hidden=true;$("app").hidden=false;load();loadDefaults()}
 async function load(){
  var st=await (await api("stats")).json();
- $("kpis").innerHTML='<div class="card kpi"><b>'+st.orders+'</b>pedidos (sin cancelados)</div><div class="card kpi"><b>Bs '+st.revenue+'</b>vendido</div>';
+ $("kpis").innerHTML='<div class="card kpi"><b>'+st.orders+'</b>pedidos (sin cancelados)</div><div class="card kpi"><b>'+st.sales+'</b>ventas (pedidos pagados)</div><div class="card kpi"><b>Bs '+st.sold+'</b>vendido (cobrado)</div><div class="card kpi"><b>Bs '+st.pending+'</b>por cobrar</div>';
  var f=Object.entries(st.byFlavor).sort(function(a,b){return b[1]-a[1]});
  $("flavors").innerHTML=f.length?f.map(function(x){return esc(x[0])+": <b>"+x[1]+"</b>"}).join("<br>"):"Aún no hay pedidos.";
  var so=(await (await api("soldout")).json()).ids;

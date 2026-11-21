@@ -49,13 +49,14 @@ export default async (req) => {
     if (path.endsWith("/stats")) {
       const orders = (await allOrders()).filter((o) => o.status !== "cancelado");
       const byFlavor = {}, byDay = {};
-      let revenue = 0;
+      let revenue = 0, sales = 0, sold = 0;
       for (const o of orders) {
         revenue += o.total;
+        if (o.paid) { sales++; sold += o.total; }
         const d = o.createdAt.slice(0, 10); byDay[d] = (byDay[d] || 0) + o.total;
         for (const i of o.items) { const p = PRODUCTS[i.key]; const f = p ? p.name : i.name; byFlavor[f] = (byFlavor[f] || 0) + i.qty; }
       }
-      return json({ orders: orders.length, revenue, byFlavor, byDay });
+      return json({ orders: orders.length, revenue, sales, sold, pending: revenue - sold, byFlavor, byDay });
     }
 
     if (path.endsWith("/content")) {
